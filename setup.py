@@ -25,6 +25,7 @@ setuptools.setup(
 
     entry_points={
        'console_scripts': [
+           'app = autopip:main',
            'autopip = autopip:main',
        ],
     },
