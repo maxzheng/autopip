@@ -8,6 +8,7 @@ def cli_args():
     """" Get command-line args """
     parser = argparse.ArgumentParser(description='Easily install apps from PyPI and '
                                                  'automatically keep them updated.')
+    parser.add_argument('--debug', action='store_true', help='Turn on debug mode')
     subparsers = parser.add_subparsers(title='Commands', help='List of commands')
 
     install_parser = subparsers.add_parser('install',
@@ -32,15 +33,22 @@ def main():
     args = cli_args()
     mgr = AppsManager()
 
-    if args.command == 'install':
-        mgr.install(args.apps)
+    try:
+        if args.command == 'install':
+            mgr.install(args.apps)
 
-    elif args.command == 'list':
-        mgr.list(scripts=args.scripts)
+        elif args.command == 'list':
+            mgr.list(scripts=args.scripts)
 
-    elif args.command == 'uninstall':
-        mgr.uninstall(args.apps)
+        elif args.command == 'uninstall':
+            mgr.uninstall(args.apps)
 
-    else:
-        print('Command {} not implemented yet'.format(args.command))
+        else:
+            raise NotImplementedError('Command {} not implemented yet'.format(args.command))
+
+    except Exception as e:
+        if args.debug:
+            raise
+        elif str(e):
+            print(f'! {e}')
         sys.exit(1)

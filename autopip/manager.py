@@ -5,13 +5,20 @@ from pathlib import Path, PurePath
 import re
 import shutil
 from subprocess import check_call as run
-import sys
 import urllib.request
 import urllib.error
 
 
-class MissingCommandError(RuntimeError):
+class MissingCommandError(Exception):
     """ Indicates a required CLI command is missing """
+
+
+class FailedAction(Exception):
+    """ Indicates a specific action failed """
+
+
+class InvalidAction(Exception):
+    """ Indicates a specific action failed """
 
 
 class AppsManager:
@@ -42,22 +49,32 @@ class AppsManager:
         self._ensure_paths()
         self._set_index()
 
+        failed_apps = []
+
         for app in apps:
-            self._install_pkg(app)
+            try:
+                self._install_app(app)
+
+            except Exception as e:
+                print(f'! {e}')
+                failed_apps.append(app)
+
+        if failed_apps:
+            raise FailedAction()
 
     def _ensure_paths(self):
         """ Ensure install and symlink paths are created """
         self.install_root.mkdir(parents=True, exist_ok=True)
         self.symlink_root.mkdir(parents=True, exist_ok=True)
 
-    def _install_pkg(self, name):
+    def _install_app(self, name):
         """ Install the given app """
-        version = self._pkg_version(name)
+        version = self._app_version(name)
 
         app = App(name, self.paths)
         app.install(version)
 
-    def _pkg_version(self, name):
+    def _app_version(self, name):
         """ Get app version from PyPI """
         pkg_index_url = self._index_url + name + '/'
 
@@ -247,12 +264,12 @@ class App:
         current_scripts = self.scripts(current_bin_path)
 
         if not current_scripts:
-            print('! Odd, there are no scripts included in the app, so there is no point installing it.')
-            print('  autopip is for installing apps with scripts. To install libraries, please use pip.')
-            print('  If you are the app owner, be make sure to setup entry_points in setup.py.')
-            print('  See http://setuptools.readthedocs.io/en/latest/setuptools.html#automatic-script-creation')
             self.uninstall()
-            sys.exit(1)
+            raise InvalidAction(
+                'Odd, there are no scripts included in the app, so there is no point installing it.\n'
+                '  autopip is for installing apps with scripts. To install libraries, please use pip.\n'
+                '  If you are the app owner, make sure to setup entry_points in setup.py.\n'
+                '  See http://setuptools.readthedocs.io/en/latest/setuptools.html#automatic-script-creation')
 
         prev_scripts = self.scripts(prev_bin_path) if prev_bin_path else set()
         old_scripts = prev_scripts - current_scripts
