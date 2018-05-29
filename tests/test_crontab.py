@@ -13,8 +13,33 @@ def test_add(mock_run, monkeypatch):
     mock_run.assert_called_with('( crontab -l | grep -vF "echo hello"; echo "* * * * * echo hello" ) | crontab -',
                                 shell=True)
 
-    crontab.add('echo hello', schedule='* * * * *', name='hello')
+    crontab.add('echo hello', schedule='* * * * *', cmd_id='hello')
     mock_run.assert_called_with('( crontab -l | grep -vF "hello"; echo "* * * * * echo hello" ) | crontab -',
+                                shell=True)
+
+    crontab.add('echo hello > /dev/null')
+    mock_run.assert_called_with('( crontab -l | grep -vF "echo hello"; '
+                                'echo "10 * * * * echo hello > /dev/null" ) | crontab -',
+                                shell=True)
+
+    crontab.add('echo hello < /dev/null')
+    mock_run.assert_called_with('( crontab -l | grep -vF "echo hello"; '
+                                'echo "10 * * * * echo hello < /dev/null" ) | crontab -',
+                                shell=True)
+
+    crontab.add('echo hello | tee /tmp/log')
+    mock_run.assert_called_with('( crontab -l | grep -vF "echo hello"; '
+                                'echo "10 * * * * echo hello | tee /tmp/log" ) | crontab -',
+                                shell=True)
+
+    crontab.add('echo hello &> /dev/null')
+    mock_run.assert_called_with('( crontab -l | grep -vF "echo hello"; '
+                                'echo "10 * * * * echo hello &> /dev/null" ) | crontab -',
+                                shell=True)
+
+    crontab.add('echo hello 2>&1 > /dev/null')
+    mock_run.assert_called_with('( crontab -l | grep -vF "echo hello"; '
+                                'echo "10 * * * * echo hello 2>&1 > /dev/null" ) | crontab -',
                                 shell=True)
 
 
@@ -28,5 +53,5 @@ def test_list(mock_run):
 
 def test_remove(mock_run):
     crontab.remove('hello')
-    mock_run.assert_called_with('( crontab -l | grep -vF "{name}" ) | crontab -',
+    mock_run.assert_called_with('( crontab -l | grep -vF "hello" ) | crontab -',
                                 shell=True)

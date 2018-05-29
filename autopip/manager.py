@@ -4,21 +4,12 @@ import os
 from pathlib import Path, PurePath
 import re
 import shutil
-from subprocess import check_call as run
+from subprocess import check_output as run, CalledProcessError, STDOUT
+import sys
 import urllib.request
 import urllib.error
 
-
-class MissingCommandError(Exception):
-    """ Indicates a required CLI command is missing """
-
-
-class FailedAction(Exception):
-    """ Indicates a specific action failed """
-
-
-class InvalidAction(Exception):
-    """ Indicates a specific action failed """
+from autopip import crontab, exceptions
 
 
 class AppsManager:
@@ -27,12 +18,6 @@ class AppsManager:
     def __init__(self):
         #: An instance of :cls:`AppsPath`
         self.paths = AppsPath()
-
-        #: Path to install all our apps
-        self.install_root = self.paths.install_root
-
-        #: Path to create symlinks for bin scripts
-        self.symlink_root = self.paths.symlink_root
 
         # PyPI url
         self._index_url = None
@@ -60,12 +45,13 @@ class AppsManager:
                 failed_apps.append(app)
 
         if failed_apps:
-            raise FailedAction()
+            raise exceptions.FailedAction()
 
     def _ensure_paths(self):
         """ Ensure install and symlink paths are created """
-        self.install_root.mkdir(parents=True, exist_ok=True)
-        self.symlink_root.mkdir(parents=True, exist_ok=True)
+        self.paths.install_root.mkdir(parents=True, exist_ok=True)
+        self.paths.symlink_root.mkdir(parents=True, exist_ok=True)
+        self.paths.log_root.mkdir(parents=True, exist_ok=True)
 
     def _install_app(self, name):
         """ Install the given app """
@@ -135,49 +121,58 @@ class AppsManager:
 
         :param bool scripts: Show scripts
         """
-        if not self.install_root.exists():
-            print('No apps are installed yet')
-            return
+        self._ensure_paths()
 
         app_info = []
         info_lens = defaultdict(int)
 
-        for app_path in sorted(self.install_root.iterdir()):
-            if app_path == self.symlink_root:
+        for app_path in sorted(self.paths.install_root.iterdir()):
+            if app_path in {self.paths.symlink_root, self.paths.log_root}:
                 continue
 
             app = App(app_path.name, self.paths)
-            app_path = str(app.current_path.resolve())
-            app_info.append((app.name, app.current_version, app_path))
 
-            if scripts:
-                for hide_path, script in enumerate(app.scripts()):
-                    script_symlink = self.symlink_root / script
-                    if script_symlink.exists() and str(script_symlink.resolve()).startswith(app_path):
-                        script_path = str(script_symlink)
-                        if hide_path:
-                            script_path = script_path.replace(str(script_symlink.parent) + '/',
-                                                              ' ' * len(str(script_symlink.parent)) + ' ')
-                        app_info.append(('', '', script_path))
+            if app.is_installed:
+                app_path = str(app.current_path.resolve())
+                app_info.append((app.name, app.current_version, app_path))
 
-        # Figure out max length of each column
-        for info in app_info:
-            for i, value in enumerate(info):
-                info_lens[i] = len(value) if len(value) > info_lens[i] else info_lens[i]
+                if scripts:
+                    for hide_path, script in enumerate(app.scripts()):
+                        script_symlink = self.paths.symlink_root / script
+                        if script_symlink.exists() and str(script_symlink.resolve()).startswith(app_path):
+                            script_path = str(script_symlink)
+                            if hide_path:
+                                script_path = script_path.replace(str(script_symlink.parent) + '/',
+                                                                  ' ' * len(str(script_symlink.parent)) + ' ')
+                            app_info.append(('', '', script_path))
 
-        # Print table
-        table_style = '  '.join('{{:{}}}'.format(l) for l in info_lens.values())
-        for info in app_info:
-            print(table_style.format(*info))
+        if app_info:
+            # Figure out max length of each column
+            for info in app_info:
+                for i, value in enumerate(info):
+                    info_lens[i] = len(value) if len(value) > info_lens[i] else info_lens[i]
+
+            # Print table
+            table_style = '  '.join('{{:{}}}'.format(l) for l in info_lens.values())
+            for info in app_info:
+                print(table_style.format(*info))
+
+        else:
+            print('No apps are installed yet')
 
     def uninstall(self, apps):
         """ Uninstall apps """
+        self._ensure_paths()
+
         for name in apps:
             if name == 'bin':  # Don't try to remove bin (contains symlinks to scripts) from the app dir
                 continue
 
             app = App(name, self.paths)
-            app.uninstall()
+            if app.is_installed:
+                app.uninstall()
+            else:
+                print(f'{name} is not installed')
 
 
 class App:
@@ -224,10 +219,14 @@ class App:
         important_paths = [version_path, prev_version_path, self._current_symlink]
 
         if not shutil.which('curl'):
-            raise MissingCommandError('curl is not available and is required to install pip. '
-                                      'Please install and then re-run')
+            raise exceptions.MissingCommandError('curl is not available and is required to install pip. '
+                                                 'Please install and then re-run')
 
         if version_path.exists():
+            # Skip printing / ensuring symlinks / cronjob when running from cron
+            if not sys.stdout.isatty():
+                return
+
             print(f'{self.name} is already installed')
 
         else:
@@ -237,15 +236,19 @@ class App:
                     venv_dir = os.environ.pop('VIRTUAL_ENV')
                     os.environ['PATH'] = os.pathsep.join([p for p in os.environ['PATH'].split(os.pathsep)
                                                           if os.path.exists(p) and not p.startswith(venv_dir)])
-                run(f"""
+                run(f"""set -e
                     python3 -m venv {version_path} --without-pip
                     source {version_path / 'bin/activate'}
-                    curl -s https://bootstrap.pypa.io/get-pip.py | python > /dev/null
-                    pip install -q {self.name}=={version}
-                    """, executable='/bin/bash', shell=True)
+                    curl -s https://bootstrap.pypa.io/get-pip.py | python
+                    pip install {self.name}=={version}
+                    """, executable='/bin/bash', stderr=STDOUT, shell=True)
 
-            except:  # noqa
+            except BaseException as e:
                 shutil.rmtree(version_path, ignore_errors=True)
+
+                if isinstance(e, CalledProcessError) and e.output:
+                    print(re.sub(r'(https?://)[^/]+:[^/]+@', r'\1<xxx>:<xxx>@', e.output.decode('utf-8')))
+
                 raise
 
         # Update current symlink
@@ -265,7 +268,7 @@ class App:
 
         if not current_scripts:
             self.uninstall()
-            raise InvalidAction(
+            raise exceptions.InvalidAction(
                 'Odd, there are no scripts included in the app, so there is no point installing it.\n'
                 '  autopip is for installing apps with scripts. To install libraries, please use pip.\n'
                 '  If you are the app owner, make sure to setup entry_points in setup.py.\n'
@@ -302,10 +305,17 @@ class App:
                 print('+ ' + str(script_symlink.name))
 
         for script in sorted(old_scripts):
-            script_symlink = self.symlink_root / script
+            script_symlink = self.paths.symlink_root / script
             if script_symlink.exists():
                 script_symlink.unlink()
                 print('- '.format(script_symlink.name))
+
+        # Install cronjobs
+        autopip_path = shutil.which('autopip')
+        if not autopip_path:
+            raise exceptions.MissingCommandError(
+                'autopip is not available. Please make sure its bin folder is in PATH env var')
+        crontab.add(f'{autopip_path} install {self.name} 2>&1 >> {self.paths.log_root / "cron.log"}')
 
     def scripts(self, path=None):
         """ Get scripts for the given path. Defaults to current path for app. """
@@ -327,8 +337,10 @@ class App:
         """ Uninstall app """
         print('Uninstalling', self.name)
 
+        crontab.remove(f'autopip install {self.name}')
+
         for script in self.scripts():
-            script_symlink = self.symlink_root / script
+            script_symlink = self.paths.symlink_root / script
             if script_symlink.exists() and str(script_symlink.resolve()).startswith(str(self.path)):
                 script_symlink.unlink()
 
@@ -344,9 +356,11 @@ class AppsPath:
     #: Directory name to store apps in
     SYSTEM_INSTALL_ROOT = Path('/opt/apps')
     SYSTEM_SYMLINK_ROOT = Path('/usr/local/bin')
+    SYSTEM_LOG_ROOT = Path('/var/log/apps')
 
     USER_INSTALL_ROOT = Path('~/.apps').expanduser()
     USER_SYMLINK_ROOT = USER_INSTALL_ROOT / 'bin'
+    USER_LOG_ROOT = USER_INSTALL_ROOT / 'log'
 
     def __init__(self):
         #: A list of reasons why we don't have system access
@@ -368,6 +382,9 @@ class AppsPath:
         if not os.access(self.SYSTEM_SYMLINK_ROOT, os.W_OK):
             reasons.append(f'No permission to write to {self.SYSTEM_SYMLINK_ROOT}')
 
+        if not os.access(self.SYSTEM_LOG_ROOT.parent, os.W_OK):
+            reasons.append(f'No permission to write to {self.SYSTEM_LOG_ROOT.parent}')
+
         return reasons
 
     @property
@@ -377,6 +394,11 @@ class AppsPath:
     @property
     def symlink_root(self):
         return self.SYSTEM_SYMLINK_ROOT if self.system_access else self.USER_SYMLINK_ROOT
+
+    @property
+    def log_root(self):
+        """ Root path to store log files """
+        return self.SYSTEM_LOG_ROOT if self.system_access else self.USER_LOG_ROOT
 
     def covers(self, path):
         """ True if the given path belongs to autopip """
