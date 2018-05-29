@@ -18,6 +18,7 @@ def cli_args():
 
     list_parser = subparsers.add_parser('list', help='List installed packages')
     list_parser.add_argument('name_filter', nargs='?', help='Optionally filter by name')
+    list_parser.add_argument('--scripts', action='store_true', help='Show scripts')
     list_parser.set_defaults(command='list')
 
     uninstall_parser = subparsers.add_parser('uninstall', help='Uninstall packages')
@@ -34,8 +35,8 @@ def main():
     if args.command == 'install':
         mgr.install(args.packages)
 
-    elif args.commands == 'list':
-        mgr.list()
+    elif args.command == 'list':
+        mgr.list(scripts=args.scripts)
 
     elif args.command == 'uninstall':
         mgr.uninstall(args.packages)

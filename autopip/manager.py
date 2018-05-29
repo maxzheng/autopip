@@ -1,4 +1,5 @@
 from configparser import RawConfigParser
+from collections import defaultdict
 import os
 from pathlib import Path
 import re
@@ -111,6 +112,44 @@ class PackagesManager:
             except Exception:
                 self._index_url = 'https://pypi.org/simple/'
 
+    def list(self, scripts=False):
+        """
+        List installed packages
+
+        :param bool scripts: Show scripts
+        """
+
+        package_info = []
+        info_lens = defaultdict(int)
+
+        for package_path in sorted(self.install_root.iterdir()):
+            if package_path == self.symlink_root:
+                continue
+
+            package = Package(package_path.name, self.install_root, self.symlink_root)
+            package_path = str(package.current_path.resolve())
+            package_info.append((package.name, package.current_version, package_path))
+
+            if scripts:
+                for hide_path, script in enumerate(package.scripts()):
+                    script_symlink = self.symlink_root / script
+                    if script_symlink.exists() and str(script_symlink.resolve()).startswith(package_path):
+                        script_path = str(script_symlink)
+                        if hide_path:
+                            script_path = script_path.replace(str(script_symlink.parent) + '/',
+                                                              ' ' * len(str(script_symlink.parent)) + ' ')
+                        package_info.append(('', '', script_path))
+
+        # Figure out max length of each column
+        for info in package_info:
+            for i, value in enumerate(info):
+                info_lens[i] = len(value) if len(value) > info_lens[i] else info_lens[i]
+
+        # Print table
+        table_style = '  '.join('{{:{}}}'.format(l) for l in info_lens.values())
+        for info in package_info:
+            print(table_style.format(*info))
+
 
 class Package:
     """ Represents a package that may or may not be installed on disk """
@@ -138,6 +177,12 @@ class Package:
     def current_path(self):
         """ Path to currently installed package """
         return self._current_symlink if self.is_installed else None
+
+    @property
+    def current_version(self):
+        """ Currently installed version """
+        if self.current_path:
+            return self.current_path.resolve().name
 
     def install(self, version):
         """
@@ -174,6 +219,7 @@ class Package:
                 shutil.rmtree(version_path, ignore_errors=True)
                 raise
 
+        # Update current symlink
         if not self.current_path or self.current_path.resolve() != version_path:
             atomic_symlink = self.root_path / f'atomic_symlink_for_{self.name}'
             atomic_symlink.symlink_to(version_path)
@@ -183,30 +229,22 @@ class Package:
             for path in [p for p in self.root_path.iterdir() if p not in important_paths]:
                 shutil.rmtree(path, ignore_errors=True)
 
-        # Install bin symlinks
-        def bin_scripts(path):
-            scripts = set()
-            for script in path.iterdir():
-                if any(p for p in self.SKIP_SCRIPT_PREFIXES if script.name.startswith(p)):
-                    continue
-                scripts.add(script.name)
-            return scripts
-
+        # Install script symlinks
         current_bin_path = self.current_path / 'bin'
         prev_bin_path = prev_version_path / 'bin' if prev_version_path else None
-        current_scripts = bin_scripts(current_bin_path)
+        current_scripts = self.scripts(current_bin_path)
 
         if not current_scripts:
             print('Odd, there are not scripts included in the package.')
             print('autopip is meant to install packages with scripts. For installing libraries, you should use pip')
             sys.exit(1)
 
-        prev_scripts = bin_scripts(prev_bin_path) if prev_bin_path else set()
+        prev_scripts = self.scripts(prev_bin_path) if prev_bin_path else set()
         old_scripts = prev_scripts - current_scripts
 
         printed_updating = False
 
-        for script in current_scripts:
+        for script in sorted(current_scripts):
             script_symlink = self.symlink_path / script
             script_path = current_bin_path / script
 
@@ -214,7 +252,7 @@ class Package:
                 continue
 
             if not printed_updating:
-                print('Updating symlinks to scripts')
+                print('Updating symlinks in {}'.format(self.symlink_path))
                 printed_updating = True
 
             if script_symlink.exists():
@@ -222,20 +260,35 @@ class Package:
                     atomic_symlink = self.symlink_path / f'atomic_symlink_for_{self.name}'
                     atomic_symlink.symlink_to(script_path)
                     atomic_symlink.replace(script_symlink)
-                    print('* {} (updated)'.format(script_symlink))
+                    print('* {}'.format(script_symlink.name))
 
                 else:
-                    print('! {} (can not change / not managed by autopip)'.format(script_symlink))
+                    print('! {} (can not change / not managed by autopip)'.format(script_symlink.name))
 
             else:
                 script_symlink.symlink_to(script_path)
-                print('+ ' + str(script_symlink))
+                print('+ ' + str(script_symlink.name))
 
-        for script in old_scripts:
+        for script in sorted(old_scripts):
             script_symlink = self.symlink_root / script
             if script_symlink.exists():
                 script_symlink.unlink()
-                print('- '.format(script_symlink))
+                print('- '.format(script_symlink.name))
+
+    def scripts(self, path=None):
+        """ Get scripts for the given path. Defaults to current path for package. """
+        if not path:
+            if not self.current_path:
+                return []
+
+            path = self.current_path / 'bin'
+
+        scripts = set()
+        for script in path.iterdir():
+            if any(p for p in self.SKIP_SCRIPT_PREFIXES if script.name.startswith(p)):
+                continue
+            scripts.add(script.name)
+        return scripts
 
 
 class Privilege:
