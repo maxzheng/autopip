@@ -40,10 +40,10 @@ def add(cmd, schedule='? * * * *', cmd_id=None):
             raise ValueError('cmd_id must be a substring of cmd')
 
     else:
-        cmd_id = re.sub('[ &12]*[>|<].*', '', cmd)
+        cmd_id = re.sub('[ &12]*[>|<=].*', '', cmd)
 
     if '?' in schedule:
-        schedule = schedule.replace('?', str(randint(0, 60)))
+        schedule = schedule.replace('?', str(randint(0, 59)))
 
     crontab_cmd = f'( crontab -l | grep -vF "{cmd_id}"; echo "{schedule} {cmd}" ) | crontab -'
     run(crontab_cmd, shell=True)
@@ -60,4 +60,6 @@ def remove(name):
     """ Remove cmd with the given name """
     _ensure_cron()
 
-    run(f'( crontab -l | grep -vF "{name}" ) | crontab -', shell=True)
+    name = name.replace('"', r'\"')
+
+    print(run(f'( crontab -l | grep -vF "{name}" ) | crontab -', shell=True))

@@ -2,6 +2,7 @@ from configparser import RawConfigParser
 from collections import defaultdict
 import os
 from pathlib import Path, PurePath
+from pkg_resources import parse_requirements
 import re
 import shutil
 from subprocess import check_output as run, CalledProcessError, STDOUT
@@ -38,7 +39,8 @@ class AppsManager:
 
         for app in apps:
             try:
-                self._install_app(app)
+                app_spec = next(iter(parse_requirements(app)))
+                self._install_app(app_spec)
 
             except Exception as e:
                 print(f'! {e}')
@@ -53,16 +55,16 @@ class AppsManager:
         self.paths.symlink_root.mkdir(parents=True, exist_ok=True)
         self.paths.log_root.mkdir(parents=True, exist_ok=True)
 
-    def _install_app(self, name):
+    def _install_app(self, app_spec):
         """ Install the given app """
-        version = self._app_version(name)
+        version = self._app_version(app_spec)
 
-        app = App(name, self.paths)
-        app.install(version)
+        app = App(app_spec.name, self.paths)
+        app.install(version, app_spec)
 
-    def _app_version(self, name):
+    def _app_version(self, app_spec):
         """ Get app version from PyPI """
-        pkg_index_url = self._index_url + name + '/'
+        pkg_index_url = self._index_url + app_spec.name + '/'
 
         try:
             if self._index_auth:
@@ -81,16 +83,23 @@ class AppsManager:
             if e.code == 404:
                 raise NameError(f'App does not exist on {self._index_url}')
 
-        version_re = re.compile(name + '-(\d+\.\d+\.\d+(?:\.\w+\d+)?)\.')
+        version_re = re.compile(app_spec.name + '-(\d+\.\d+\.\d+(?:\.\w+\d+)?)\.')
         version = None
+        versions = []
 
         for line in version_links.split('\n'):
             match = version_re.search(line)
             if match:
-                version = match.group(1)
+                if match.group(1) in app_spec:
+                    version = match.group(1)
+                else:
+                    versions.append(match.group(1))
 
         if not version:
-            raise ValueError(f'No app version found in {pkg_index_url}')
+            if versions:
+                raise ValueError(f'No app version matching {app_spec}. \nAvailable versions: ' + ', '.join(versions))
+            else:
+                raise ValueError(f'No app version found in {pkg_index_url}')
 
         return version
 
@@ -208,11 +217,12 @@ class App:
         if self.current_path:
             return self.current_path.resolve().name
 
-    def install(self, version):
+    def install(self, version, app_spec):
         """
         Install the version of the app if it is not already installed
 
         :param str version: Version of the app to install
+        :param pkg_resources.Requirement app_spec: App version requirement from user
         """
         version_path = self.path / version
         prev_version_path = self.current_path and self.current_path.resolve()
@@ -223,17 +233,24 @@ class App:
                                                  'Please install and then re-run')
 
         if version_path.exists():
-            # Skip printing / ensuring symlinks / cronjob when running from cron
-            if not sys.stdout.isatty():
-                return
+            if self.current_version == version:
+                # Skip printing / ensuring symlinks / cronjob when running from cron
+                if not sys.stdout.isatty():
+                    return
 
-            print(f'{self.name} is already installed')
+                print(f'{self.name} is already installed')
+
+            else:
+                print(f'Setting {version} as the current version for {self.name}')
 
         else:
+            old_path = None
+
             try:
                 print(f'Installing {self.name} to {version_path}')
                 if 'VIRTUAL_ENV' in os.environ:
                     venv_dir = os.environ.pop('VIRTUAL_ENV')
+                    old_path = os.environ['PATH']
                     os.environ['PATH'] = os.pathsep.join([p for p in os.environ['PATH'].split(os.pathsep)
                                                           if os.path.exists(p) and not p.startswith(venv_dir)])
                 run(f"""set -e
@@ -250,6 +267,10 @@ class App:
                     print(re.sub(r'(https?://)[^/]+:[^/]+@', r'\1<xxx>:<xxx>@', e.output.decode('utf-8')))
 
                 raise
+
+            finally:
+                if old_path:
+                    os.environ['PATH'] = old_path
 
         # Update current symlink
         if not self.current_path or self.current_path.resolve() != version_path:
@@ -311,11 +332,12 @@ class App:
                 print('- '.format(script_symlink.name))
 
         # Install cronjobs
-        autopip_path = shutil.which('autopip')
-        if not autopip_path:
-            raise exceptions.MissingCommandError(
-                'autopip is not available. Please make sure its bin folder is in PATH env var')
-        crontab.add(f'{autopip_path} install {self.name} 2>&1 >> {self.paths.log_root / "cron.log"}')
+        if sys.stdout.isatty():  # Skip updating cronjob when run from cron
+            autopip_path = shutil.which('autopip')
+            if not autopip_path:
+                raise exceptions.MissingCommandError(
+                    'autopip is not available. Please make sure its bin folder is in PATH env var')
+            crontab.add(f'{autopip_path} install "{app_spec}" 2>&1 >> {self.paths.log_root / "cron.log"}')
 
     def scripts(self, path=None):
         """ Get scripts for the given path. Defaults to current path for app. """
@@ -337,7 +359,7 @@ class App:
         """ Uninstall app """
         print('Uninstalling', self.name)
 
-        crontab.remove(f'autopip install {self.name}')
+        crontab.remove(f'autopip install "{self.name}')
 
         for script in self.scripts():
             script_symlink = self.paths.symlink_root / script
