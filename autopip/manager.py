@@ -1,5 +1,6 @@
 from configparser import RawConfigParser
 from collections import defaultdict
+from logging import info, error
 import os
 from pathlib import Path, PurePath
 from pkg_resources import parse_requirements
@@ -43,7 +44,7 @@ class AppsManager:
                 self._install_app(app_spec)
 
             except Exception as e:
-                print(f'! {e}')
+                error(f'! {e}')
                 failed_apps.append(app)
 
         if failed_apps:
@@ -157,17 +158,17 @@ class AppsManager:
 
         if app_info:
             # Figure out max length of each column
-            for info in app_info:
-                for i, value in enumerate(info):
+            for info_part in app_info:
+                for i, value in enumerate(info_part):
                     info_lens[i] = len(value) if len(value) > info_lens[i] else info_lens[i]
 
             # Print table
             table_style = '  '.join('{{:{}}}'.format(l) for l in info_lens.values())
-            for info in app_info:
-                print(table_style.format(*info))
+            for info_part in app_info:
+                info(table_style.format(*info_part))
 
         else:
-            print('No apps are installed yet')
+            info('No apps are installed yet')
 
     def uninstall(self, apps):
         """ Uninstall apps """
@@ -181,7 +182,7 @@ class AppsManager:
             if app.is_installed:
                 app.uninstall()
             else:
-                print(f'{name} is not installed')
+                info(f'{name} is not installed')
 
 
 class App:
@@ -238,16 +239,16 @@ class App:
                 if not sys.stdout.isatty():
                     return
 
-                print(f'{self.name} is already installed')
+                info(f'{self.name} is already installed')
 
             else:
-                print(f'Setting {version} as the current version for {self.name}')
+                info(f'Setting {version} as the current version for {self.name}')
 
         else:
             old_path = None
 
             try:
-                print(f'Installing {self.name} to {version_path}')
+                info(f'Installing {self.name} to {version_path}')
                 if 'VIRTUAL_ENV' in os.environ:
                     venv_dir = os.environ.pop('VIRTUAL_ENV')
                     old_path = os.environ['PATH']
@@ -264,7 +265,7 @@ class App:
                 shutil.rmtree(version_path, ignore_errors=True)
 
                 if isinstance(e, CalledProcessError) and e.output:
-                    print(re.sub(r'(https?://)[^/]+:[^/]+@', r'\1<xxx>:<xxx>@', e.output.decode('utf-8')))
+                    info(re.sub(r'(https?://)[^/]+:[^/]+@', r'\1<xxx>:<xxx>@', e.output.decode('utf-8')))
 
                 raise
 
@@ -308,7 +309,7 @@ class App:
                 continue
 
             if not printed_updating:
-                print('Updating symlinks in {}'.format(self.paths.symlink_root))
+                info('Updating symlinks in {}'.format(self.paths.symlink_root))
                 printed_updating = True
 
             if script_symlink.exists():
@@ -316,20 +317,20 @@ class App:
                     atomic_symlink = self.paths.symlink_root / f'atomic_symlink_for_{self.name}'
                     atomic_symlink.symlink_to(script_path)
                     atomic_symlink.replace(script_symlink)
-                    print('* {} (updated)'.format(script_symlink.name))
+                    info('* {} (updated)'.format(script_symlink.name))
 
                 else:
-                    print('! {} (can not change / not managed by autopip)'.format(script_symlink.name))
+                    info('! {} (can not change / not managed by autopip)'.format(script_symlink.name))
 
             else:
                 script_symlink.symlink_to(script_path)
-                print('+ ' + str(script_symlink.name))
+                info('+ ' + str(script_symlink.name))
 
         for script in sorted(old_scripts):
             script_symlink = self.paths.symlink_root / script
             if script_symlink.exists():
                 script_symlink.unlink()
-                print('- '.format(script_symlink.name))
+                info('- '.format(script_symlink.name))
 
         # Install cronjobs
         if sys.stdout.isatty():  # Skip updating cronjob when run from cron
@@ -357,7 +358,7 @@ class App:
 
     def uninstall(self):
         """ Uninstall app """
-        print('Uninstalling', self.name)
+        info('Uninstalling', self.name)
 
         crontab.remove(f'autopip install "{self.name}')
 

@@ -1,7 +1,31 @@
 import argparse
+import logging
 import sys
 
 from autopip.manager import AppsManager
+
+
+def main():
+    args = cli_args()
+    setup_logger(debug=args.debug)
+    mgr = AppsManager()
+
+    try:
+        if args.command == 'install':
+            mgr.install(args.apps)
+
+        elif args.command == 'list':
+            mgr.list(scripts=args.scripts)
+
+        elif args.command == 'uninstall':
+            mgr.uninstall(args.apps)
+
+        else:
+            raise NotImplementedError('Command {} not implemented yet'.format(args.command))
+
+    except Exception as e:
+        logging.error(f'! {e}', exc_info=args.debug)
+        sys.exit(1)
 
 
 def cli_args():
@@ -29,26 +53,12 @@ def cli_args():
     return parser.parse_args()
 
 
-def main():
-    args = cli_args()
-    mgr = AppsManager()
+def setup_logger(debug=False):
+    if debug:
+        logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.DEBUG)
 
-    try:
-        if args.command == 'install':
-            mgr.install(args.apps)
+    elif sys.stdout.isatty():
+        logging.basicConfig(format='%(message)s', level=logging.INFO)
 
-        elif args.command == 'list':
-            mgr.list(scripts=args.scripts)
-
-        elif args.command == 'uninstall':
-            mgr.uninstall(args.apps)
-
-        else:
-            raise NotImplementedError('Command {} not implemented yet'.format(args.command))
-
-    except Exception as e:
-        if args.debug:
-            raise
-        elif str(e):
-            print(f'! {e}')
-        sys.exit(1)
+    else:
+        logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
