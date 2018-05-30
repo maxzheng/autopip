@@ -55,10 +55,10 @@ def cli_args():
 
 def setup_logger(debug=False):
     if debug:
-        logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.DEBUG)
+        logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', stream=sys.stdout, level=logging.DEBUG)
 
     elif sys.stdout.isatty():
-        logging.basicConfig(format='%(message)s', level=logging.INFO)
+        logging.basicConfig(format='%(message)s', stream=sys.stdout, level=logging.INFO)
 
     else:
-        logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
+        logging.basicConfig(format='%(asctime)s %(message)s', stream=sys.stdout, level=logging.INFO)

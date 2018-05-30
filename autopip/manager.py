@@ -358,7 +358,7 @@ class App:
 
     def uninstall(self):
         """ Uninstall app """
-        info('Uninstalling', self.name)
+        info('Uninstalling %s', self.name)
 
         crontab.remove(f'autopip install "{self.name}')
 
