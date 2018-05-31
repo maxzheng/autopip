@@ -1,5 +1,12 @@
-Version 0.0.3
+Version 0.0.4
 ================================================================================
+
+* Update readme
+* Add link to pip conf
+* Add note on doing user install
+
+Version 0.0.3
+--------------------------------------------------------------------------------
 
 * Update description
 
