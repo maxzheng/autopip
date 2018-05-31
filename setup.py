@@ -8,7 +8,7 @@ setuptools.setup(
     author='Max Zheng',
     author_email='maxzheng.os@gmail.com',
 
-    description='Top secret project',
+    description='Easily install apps from PyPI and automatically keep them updated',
     long_description=open('README.rst').read(),
 
     url='https://github.com/maxzheng/autopip',
