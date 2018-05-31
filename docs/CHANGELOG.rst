@@ -1,5 +1,11 @@
-Version 0.0.7
+Version 0.0.8
 ================================================================================
+
+* Redirect stderr for crontab calls
+* Update readme
+
+Version 0.0.7
+--------------------------------------------------------------------------------
 
 * Add notice to use sudo on first user install
 
