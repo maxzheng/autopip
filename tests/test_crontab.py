@@ -6,40 +6,43 @@ from autopip import crontab
 def test_add(mock_run, monkeypatch):
     monkeypatch.setattr('autopip.crontab.randint', Mock(return_value=10))
     crontab.add('echo hello')
-    mock_run.assert_called_with('( crontab -l | grep -vF "echo hello"; echo "10 * * * * echo hello" ) | crontab -',
+    mock_run.assert_called_with('( crontab -l | grep -vF "echo hello"; '
+                                'echo "10 * * * * PATH=/usr/local/bin:\$PATH echo hello" ) | crontab -',
                                 shell=True, stderr=-2)
 
     crontab.add('echo hello', schedule='* * * * *')
-    mock_run.assert_called_with('( crontab -l | grep -vF "echo hello"; echo "* * * * * echo hello" ) | crontab -',
+    mock_run.assert_called_with('( crontab -l | grep -vF "echo hello"; '
+                                'echo "* * * * * PATH=/usr/local/bin:\$PATH echo hello" ) | crontab -',
                                 shell=True, stderr=-2)
 
     crontab.add('echo hello', schedule='* * * * *', cmd_id='hello')
-    mock_run.assert_called_with('( crontab -l | grep -vF "hello"; echo "* * * * * echo hello" ) | crontab -',
+    mock_run.assert_called_with('( crontab -l | grep -vF "hello"; '
+                                'echo "* * * * * PATH=/usr/local/bin:\$PATH echo hello" ) | crontab -',
                                 shell=True, stderr=-2)
 
     crontab.add('echo hello > /dev/null')
     mock_run.assert_called_with('( crontab -l | grep -vF "echo hello"; '
-                                'echo "10 * * * * echo hello > /dev/null" ) | crontab -',
+                                'echo "10 * * * * PATH=/usr/local/bin:\$PATH echo hello > /dev/null" ) | crontab -',
                                 shell=True, stderr=-2)
 
     crontab.add('echo hello < /dev/null')
     mock_run.assert_called_with('( crontab -l | grep -vF "echo hello"; '
-                                'echo "10 * * * * echo hello < /dev/null" ) | crontab -',
+                                'echo "10 * * * * PATH=/usr/local/bin:\$PATH echo hello < /dev/null" ) | crontab -',
                                 shell=True, stderr=-2)
 
     crontab.add('echo hello | tee /tmp/log')
     mock_run.assert_called_with('( crontab -l | grep -vF "echo hello"; '
-                                'echo "10 * * * * echo hello | tee /tmp/log" ) | crontab -',
+                                'echo "10 * * * * PATH=/usr/local/bin:\$PATH echo hello | tee /tmp/log" ) | crontab -',
                                 shell=True, stderr=-2)
 
     crontab.add('echo hello &> /dev/null')
     mock_run.assert_called_with('( crontab -l | grep -vF "echo hello"; '
-                                'echo "10 * * * * echo hello &> /dev/null" ) | crontab -',
+                                'echo "10 * * * * PATH=/usr/local/bin:\$PATH echo hello &> /dev/null" ) | crontab -',
                                 shell=True, stderr=-2)
 
     crontab.add('echo hello 2>&1 > /dev/null')
-    mock_run.assert_called_with('( crontab -l | grep -vF "echo hello"; '
-                                'echo "10 * * * * echo hello 2>&1 > /dev/null" ) | crontab -',
+    mock_run.assert_called_with('( crontab -l | grep -vF "echo hello"; echo "10 * * * * '
+                                'PATH=/usr/local/bin:\$PATH echo hello 2>&1 > /dev/null" ) | crontab -',
                                 shell=True, stderr=-2)
 
 
