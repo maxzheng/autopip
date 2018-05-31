@@ -9,17 +9,22 @@ To install::
 
     # For all users -- this is safe as autopip has no install dependencies and never will.
     # But if you want to test it out for your user only, then just skip `sudo` when running each command.
-    sudo pip install autopip
+    sudo pip3 install autopip
 
 Now, you can easily install any apps from PyPI without having to manage virtualenvs or re-run pip again to update as
 autopip does all that for you automatically -- one virtualenv per app and auto-updated atomically and hourly via cron
-service whenever a new version is released::
+service whenever a new version is released:
 
-    sudo autopip install workspace-tools
+.. code-block:: console
+
+    $ sudo autopip install workspace-tools
+    Installing workspace-tools to /opt/apps/workspace-tools/3.2.2
+    Updating symlinks in /usr/local/bin
+    + wst
 
 To show currently installed apps and their scripts:
 
-.. code-block:: shell
+.. code-block:: console
 
     $ sudo autopip list --scripts
     ansible-hostmanager  0.2.3   /opt/apps/ansible-hostmanager/0.2.3
@@ -31,8 +36,10 @@ To uninstall::
 
     sudo autopip uninstall workspace-tools
 
+To save typing a few letters, you can also use the `app` alias -- short for AutoPiP -- instead of `autopip`.
+
 If you need to use a private PyPI index, just configure `index-url` in `~/.pip/pip.conf
-<https://pip.pypa.io/en/stable/user_guide/#configuration>`_
+<https://pip.pypa.io/en/stable/user_guide/#configuration>`_ as `autopip` simply uses `pip` under the hood.
 
 Links & Contact Info
 ====================
