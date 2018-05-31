@@ -47,14 +47,14 @@ def add(cmd, schedule='? * * * *', cmd_id=None):
         schedule = schedule.replace('?', str(randint(0, 59)))
 
     crontab_cmd = f'( crontab -l | grep -vF "{cmd_id}"; echo "{schedule} {cmd}" ) | crontab -'
-    run(crontab_cmd, shell=True)
+    run(crontab_cmd, stderr=STDOUT, shell=True)
 
 
 def list(name_filter='autopip'):
     """ List current schedules """
     _ensure_cron()
 
-    info(run(f'crontab -l | grep {name_filter}', shell=True))
+    info(run(f'crontab -l | grep {name_filter}', stderr=STDOUT, shell=True))
 
 
 def remove(name):
@@ -63,4 +63,4 @@ def remove(name):
 
     name = name.replace('"', r'\"')
 
-    run(f'( crontab -l | grep -vF "{name}" ) | crontab -', shell=True)
+    run(f'( crontab -l | grep -vF "{name}" ) | crontab -', stderr=STDOUT, shell=True)

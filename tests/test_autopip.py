@@ -54,7 +54,7 @@ def test_autopip(monkeypatch, autopip):
     assert mock_run.call_args_list == [
         call('which crontab', shell=True, stderr=-2),
         call('pgrep cron', shell=True, stderr=-2),
-        call('( crontab -l | grep -vF "autopip install \\"bumper" ) | crontab -', shell=True)
+        call('( crontab -l | grep -vF "autopip install \\"bumper" ) | crontab -', shell=True, stderr=-2)
     ]
 
     assert autopip('list') == 'No apps are installed yet\n'
