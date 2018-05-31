@@ -95,24 +95,27 @@ class AppsManager:
                 raise NameError(f'App does not exist on {self._index_url}')
 
         version_re = re.compile(app_spec.name + '-(\d+\.\d+\.\d+(?:\.\w+\d+)?)\.')
-        version = None
         versions = []
+        matched_versions = []
 
         for line in version_links.split('\n'):
             match = version_re.search(line)
             if match:
                 if match.group(1) in app_spec:
-                    version = match.group(1)
+                    matched_versions.append(match.group(1))
                 else:
                     versions.append(match.group(1))
 
-        if not version:
+        if not matched_versions:
             if versions:
                 raise ValueError(f'No app version matching {app_spec} \nAvailable versions: ' + ', '.join(versions))
             else:
                 raise ValueError(f'No app version found in {pkg_index_url}')
 
-        return version
+        version_sep_re = re.compile('[^0-9]+')
+        sorted_versions = sorted(matched_versions, key=lambda v: tuple(map(int, version_sep_re.split(v))))
+
+        return sorted_versions[-1]
 
     def _set_index(self):
         """ Set PyPI url and auth """
