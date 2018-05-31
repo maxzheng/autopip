@@ -31,7 +31,8 @@ To uninstall::
 
     sudo autopip uninstall workspace-tools
 
-If you need to use a private PyPI index, just configure `index-url` in `~/.pip/pip.conf`
+If you need to use a private PyPI index, just configure `index-url` in `~/.pip/pip.conf
+<https://pip.pypa.io/en/stable/user_guide/#configuration>`_
 
 Links & Contact Info
 ====================
