@@ -1,6 +1,6 @@
 from configparser import RawConfigParser
 from collections import defaultdict
-from logging import info, error
+from logging import info, error, debug
 import os
 from pathlib import Path, PurePath
 from pkg_resources import parse_requirements
@@ -427,15 +427,19 @@ class AppsPath:
         """ Check to see if we have access to system resources and return the reasons """
         reasons = []
 
-        if not os.access(self.SYSTEM_INSTALL_ROOT.parent, os.W_OK):
+        if not (os.access(self.SYSTEM_INSTALL_ROOT.parent, os.W_OK) or os.access(self._SYSTEM_BASE, os.W_OK)):
             reasons.append(f'No permission to write to {self.SYSTEM_INSTALL_ROOT.parent}')
 
-        if not os.access(self.SYSTEM_SYMLINK_ROOT, os.W_OK):
+        if not (os.access(self.SYSTEM_SYMLINK_ROOT, os.W_OK) or os.access(self._SYSTEM_BASE, os.W_OK)):
             reasons.append(f'No permission to write to {self.SYSTEM_SYMLINK_ROOT}')
 
         if not (os.access(self.SYSTEM_LOG_ROOT.parent, os.W_OK) or
-                os.access(self.SYSTEM_LOG_ROOT.parent.parent, os.W_OK)):
+                os.access(self.SYSTEM_LOG_ROOT.parent.parent, os.W_OK) or
+                os.access(self._SYSTEM_BASE, os.W_OK)):
             reasons.append(f'No permission to write to {self.SYSTEM_LOG_ROOT.parent}')
+
+        if reasons:
+            debug('Can not use system paths because:\n%s', '\n'.join(reasons))
 
         return reasons
 
