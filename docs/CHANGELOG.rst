@@ -1,5 +1,10 @@
-Version 0.0.5
+Version 0.0.6
 ================================================================================
+
+* Add example using app and installing autopip itself
+
+Version 0.0.5
+--------------------------------------------------------------------------------
 
 * Bump version
 * Always override links for autopip
