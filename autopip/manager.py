@@ -186,7 +186,12 @@ class AppsManager:
                 info(table_style.format(*info_part))
 
         else:
-            info('No apps are installed yet')
+            info('No apps are installed yet.')
+
+            autopip_path = shutil.which('autopip')
+            if (self.paths.user_access and sys.stdout.isatty() and autopip_path and
+                    autopip_path.startswith(str(self.paths.SYSTEM_SYMLINK_ROOT))):
+                info('To see apps installed to %s, re-run using sudo', self.paths.SYSTEM_SYMLINK_ROOT)
 
     def uninstall(self, apps):
         """ Uninstall apps """
