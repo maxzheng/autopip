@@ -36,7 +36,18 @@ To uninstall::
 
     sudo autopip uninstall workspace-tools
 
-To save typing a few letters, you can also use the `app` alias -- short for AutoPiP -- instead of `autopip`.
+To save typing a few letters, you can also use the `app` alias -- short for AutoPiP -- instead of `autopip` and you can
+even keep `autopip` updated automatically by installing itself:
+
+.. code-block:: console
+
+    $ sudo app install autopip
+    Installing autopip to /opt/apps/autopip/0.0.5
+    Updating symlinks in /usr/local/bin
+    * app (updated)
+    * autopip (updated)
+
+Now, that's convenience! ;)
 
 If you need to use a private PyPI index, just configure `index-url` in `~/.pip/pip.conf
 <https://pip.pypa.io/en/stable/user_guide/#configuration>`_ as `autopip` simply uses `pip` under the hood.
