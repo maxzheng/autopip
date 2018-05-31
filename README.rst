@@ -7,9 +7,10 @@ FYI Currently supports Python 3.x apps only, but 2.x is coming soon.
 
 To install ``autopip`` to /usr/local/bin for all users::
 
-    # This is safe as autopip has no install dependencies and never will.
-    # If you want to install to your user home, then just skip sudo when running each command (pip3 and autopip)
     sudo pip3 install autopip
+
+    # No need to worry about tainting system Python install as autopip has no install dependencies and never will.
+    # If you want to install to your user home, then just skip sudo when running each command (pip3 and autopip)
 
 Now, you can easily install any apps from PyPI without having to manage virtualenvs or re-run ``pip`` again to update as
 ``autopip`` does all that for you automatically -- one virtualenv per app version and auto-updated atomically and hourly
