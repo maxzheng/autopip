@@ -318,7 +318,7 @@ class App:
                 printed_updating = True
 
             if script_symlink.exists():
-                if self.paths.covers(script_symlink):
+                if self.paths.covers(script_symlink) or self.name == 'autopip':
                     atomic_symlink = self.paths.symlink_root / f'atomic_symlink_for_{self.name}'
                     atomic_symlink.symlink_to(script_path)
                     atomic_symlink.replace(script_symlink)
