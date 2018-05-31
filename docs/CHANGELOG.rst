@@ -1,5 +1,10 @@
-Version 0.0.8
+Version 0.0.9
 ================================================================================
+
+* Move install comment to below the sudo command
+
+Version 0.0.8
+--------------------------------------------------------------------------------
 
 * Redirect stderr for crontab calls
 * Update readme
