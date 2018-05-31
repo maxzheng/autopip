@@ -433,7 +433,8 @@ class AppsPath:
         if not os.access(self.SYSTEM_SYMLINK_ROOT, os.W_OK):
             reasons.append(f'No permission to write to {self.SYSTEM_SYMLINK_ROOT}')
 
-        if not os.access(self.SYSTEM_LOG_ROOT.parent, os.W_OK):
+        if not (os.access(self.SYSTEM_LOG_ROOT.parent, os.W_OK) or
+                os.access(self.SYSTEM_LOG_ROOT.parent.parent, os.W_OK)):
             reasons.append(f'No permission to write to {self.SYSTEM_LOG_ROOT.parent}')
 
         return reasons
