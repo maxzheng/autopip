@@ -8,6 +8,7 @@ FYI Currently supports Python 3.x apps only, but 2.x is coming soon.
 To install::
 
     # For all users -- this is safe as autopip has no install dependencies and never will.
+    # But if you want to test it out for your user only, then just skip `sudo` when running each command.
     sudo pip install autopip
 
 Now, you can easily install any apps from PyPI without having to manage virtualenvs or re-run pip again to update as
