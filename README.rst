@@ -5,13 +5,12 @@ Easily install apps from PyPI and automatically keep them updated.
 
 FYI Currently supports Python 3.x apps only, but 2.x is coming soon.
 
-To install `autopip` to `/usr/local/bin` for all users::
+To install `autopip` to `/usr/local/bin` for all users (recommended)::
 
     sudo pip3 install autopip
 
     # NOTE: You should only use sudo to install packages that you trust, therefore you are welcome to skip sudo.
-    # If you do skip sudo, pip3 will install autopip to ~/.local/bin instead of /usr/local/bin,
-    # so be sure to add that to your PATH env var.
+    # If you do skip sudo, then I suggest installing it in a virtual environment.
     #
     # And no need to worry about tainting system Python install as autopip has no install dependencies and never will.
 
