@@ -1,5 +1,11 @@
-Version 0.1.0
+Version 0.1.1
 ================================================================================
+
+* Sort pkg versions from PyPI index
+* Update readme
+
+Version 0.1.0
+--------------------------------------------------------------------------------
 
 * Add note to use sudo to see apps installs in /usr/local/bin
 * Prepend /usr/local/bin to PATH in crontab as brew installs python3 there
