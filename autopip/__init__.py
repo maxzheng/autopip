@@ -23,7 +23,7 @@ def main():
         else:
             raise NotImplementedError('Command {} not implemented yet'.format(args.command))
 
-    except Exception as e:
+    except BaseException as e:
         if str(e):
             logging.error(f'! {e}', exc_info=args.debug)
         sys.exit(1)

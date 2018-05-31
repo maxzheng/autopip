@@ -39,6 +39,13 @@ class AppsManager:
         self._ensure_paths()
         self._set_index()
 
+        autopip_path = shutil.which('autopip')
+        if (self.paths.user_access and sys.stdout.isatty() and not list(self.apps) and autopip_path and
+                autopip_path.startswith(str(self.paths.SYSTEM_SYMLINK_ROOT))):
+            info('! Based on permission, this will install to your user home instead of %s',
+                 self.paths.SYSTEM_SYMLINK_ROOT)
+            info('  To install for everyone, cancel using CTRL+C and then re-run using sudo.')
+
         failed_apps = []
 
         for app in apps:
@@ -128,6 +135,18 @@ class AppsManager:
             except Exception:
                 self._index_url = 'https://pypi.org/simple/'
 
+    @property
+    def apps(self):
+        """ Iterator for installed apps """
+        for app_path in sorted(self.paths.install_root.iterdir()):
+            if app_path in {self.paths.symlink_root, self.paths.log_root}:
+                continue
+
+            app = App(app_path.name, self.paths)
+
+            if app.is_installed:
+                yield app
+
     def list(self, scripts=False):
         """
         List installed apps
@@ -139,27 +158,21 @@ class AppsManager:
         app_info = []
         info_lens = defaultdict(int)
 
-        for app_path in sorted(self.paths.install_root.iterdir()):
-            if app_path in {self.paths.symlink_root, self.paths.log_root}:
-                continue
+        for app in self.apps:
+            app_path = str(app.current_path.resolve())
+            app_info.append((app.name, app.current_version, app_path))
 
-            app = App(app_path.name, self.paths)
-
-            if app.is_installed:
-                app_path = str(app.current_path.resolve())
-                app_info.append((app.name, app.current_version, app_path))
-
-                if scripts:
-                    hide_path = False
-                    for script in sorted(app.scripts()):
-                        script_symlink = self.paths.symlink_root / script
-                        if script_symlink.exists() and str(script_symlink.resolve()).startswith(app_path):
-                            script_path = str(script_symlink)
-                            if hide_path:
-                                script_path = script_path.replace(str(script_symlink.parent) + '/',
-                                                                  ' ' * len(str(script_symlink.parent)) + ' ')
-                            app_info.append(('', '', script_path))
-                            hide_path = True
+            if scripts:
+                hide_path = False
+                for script in sorted(app.scripts()):
+                    script_symlink = self.paths.symlink_root / script
+                    if script_symlink.exists() and str(script_symlink.resolve()).startswith(app_path):
+                        script_path = str(script_symlink)
+                        if hide_path:
+                            script_path = script_path.replace(str(script_symlink.parent) + '/',
+                                                              ' ' * len(str(script_symlink.parent)) + ' ')
+                        app_info.append(('', '', script_path))
+                        hide_path = True
 
         if app_info:
             # Figure out max length of each column

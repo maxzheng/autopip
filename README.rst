@@ -5,15 +5,15 @@ Easily install apps from PyPI and automatically keep them updated.
 
 FYI Currently supports Python 3.x apps only, but 2.x is coming soon.
 
-To install::
+To install `autopip` to /usr/local/bin for all users::
 
-    # For all users -- this is safe as autopip has no install dependencies and never will.
-    # But if you want to test it out for your user only, then just skip `sudo` when running each command.
+    # This is safe as autopip has no install dependencies and never will.
+    # If you want to install to your user home, then just skip `sudo` when running each command (pip3 and autopip)
     sudo pip3 install autopip
 
 Now, you can easily install any apps from PyPI without having to manage virtualenvs or re-run pip again to update as
-autopip does all that for you automatically -- one virtualenv per app and auto-updated atomically and hourly via cron
-service whenever a new version is released:
+autopip does all that for you automatically -- one virtualenv per app version and auto-updated atomically and hourly
+via cron service whenever a new version is released:
 
 .. code-block:: console
 
