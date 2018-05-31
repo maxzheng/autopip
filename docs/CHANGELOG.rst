@@ -1,5 +1,12 @@
-Version 0.1.1
+Version 0.1.2
 ================================================================================
+
+* Switch to use /usr/local for system installs
+  
+  And also add note about using sudo and security
+
+Version 0.1.1
+--------------------------------------------------------------------------------
 
 * Sort pkg versions from PyPI index
 * Update readme
