@@ -1,5 +1,10 @@
-Version 0.2.2
+Version 0.2.3
 ================================================================================
+
+* Override links to /opt/apps as our apps used to be there
+
+Version 0.2.2
+--------------------------------------------------------------------------------
 
 * Check system base for permissions
 
