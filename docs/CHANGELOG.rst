@@ -1,5 +1,10 @@
-Version 0.0.6
+Version 0.0.7
 ================================================================================
+
+* Add notice to use sudo on first user install
+
+Version 0.0.6
+--------------------------------------------------------------------------------
 
 * Add example using app and installing autopip itself
 
