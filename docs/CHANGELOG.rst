@@ -1,5 +1,10 @@
-Version 0.2.0
+Version 0.2.1
 ================================================================================
+
+* Check log parents for system permission
+
+Version 0.2.0
+--------------------------------------------------------------------------------
 
 * Better words for sudo use and alternative to use virtual env
 
