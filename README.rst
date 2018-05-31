@@ -5,14 +5,14 @@ Easily install apps from PyPI and automatically keep them updated.
 
 FYI Currently supports Python 3.x apps only, but 2.x is coming soon.
 
-To install `autopip` to /usr/local/bin for all users::
+To install ``autopip`` to /usr/local/bin for all users::
 
     # This is safe as autopip has no install dependencies and never will.
-    # If you want to install to your user home, then just skip `sudo` when running each command (pip3 and autopip)
+    # If you want to install to your user home, then just skip sudo when running each command (pip3 and autopip)
     sudo pip3 install autopip
 
-Now, you can easily install any apps from PyPI without having to manage virtualenvs or re-run pip again to update as
-autopip does all that for you automatically -- one virtualenv per app version and auto-updated atomically and hourly
+Now, you can easily install any apps from PyPI without having to manage virtualenvs or re-run ``pip`` again to update as
+``autopip`` does all that for you automatically -- one virtualenv per app version and auto-updated atomically and hourly
 via cron service whenever a new version is released:
 
 .. code-block:: console
@@ -36,8 +36,8 @@ To uninstall::
 
     sudo autopip uninstall workspace-tools
 
-To save typing a few letters, you can also use the `app` alias -- short for AutoPiP -- instead of `autopip` and you can
-even keep `autopip` updated automatically by installing itself:
+To save typing a few letters, you can also use the ``app`` alias -- short for **a**\ uto\ **p**\ i\ **p** -- instead of
+``autopip``. And you can even keep `autopip` updated automatically by installing itself:
 
 .. code-block:: console
 
