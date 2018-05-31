@@ -150,7 +150,8 @@ class AppsManager:
                 app_info.append((app.name, app.current_version, app_path))
 
                 if scripts:
-                    for hide_path, script in enumerate(sorted(app.scripts())):
+                    hide_path = False
+                    for script in sorted(app.scripts()):
                         script_symlink = self.paths.symlink_root / script
                         if script_symlink.exists() and str(script_symlink.resolve()).startswith(app_path):
                             script_path = str(script_symlink)
@@ -158,6 +159,7 @@ class AppsManager:
                                 script_path = script_path.replace(str(script_symlink.parent) + '/',
                                                                   ' ' * len(str(script_symlink.parent)) + ' ')
                             app_info.append(('', '', script_path))
+                            hide_path = True
 
         if app_info:
             # Figure out max length of each column

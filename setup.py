@@ -13,8 +13,6 @@ setuptools.setup(
 
     url='https://github.com/maxzheng/autopip',
 
-    install_requires=open('requirements.txt').read(),
-
     license='MIT',
 
     packages=setuptools.find_packages(),
@@ -32,7 +30,7 @@ setuptools.setup(
 
     # Standard classifiers at https://pypi.org/classifiers/
     classifiers=[
-      'Development Status :: 1 - Planning',
+      'Development Status :: 4 - Beta',
 
       'Intended Audience :: Developers',
       'Topic :: Software Development :: Build Tools',

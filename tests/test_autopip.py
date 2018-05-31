@@ -3,11 +3,7 @@ import re
 from mock import Mock, call
 
 
-def test_list_no_apps(autopip):
-    assert autopip('list') == 'No apps are installed yet\n'
-
-
-def test_install_and_uninstall(monkeypatch, autopip):
+def test_autopip(monkeypatch, autopip):
     mock_run = Mock()
     monkeypatch.setattr('autopip.crontab.run', mock_run)
 
@@ -46,6 +42,11 @@ def test_install_and_uninstall(monkeypatch, autopip):
     # Already installed
     stdout = autopip('install bumper')
     assert stdout == 'bumper is already installed\n'
+
+    # Install lib
+    stdout, e = autopip('install bumper-lib', raises=SystemExit)
+    assert 'Uninstalling bumper-lib' in stdout
+    assert '! Odd, there are no scripts included in the app' in stdout
 
     # Uninstall
     mock_run.reset_mock()
