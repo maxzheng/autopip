@@ -459,4 +459,5 @@ class AppsPath:
     def covers(self, path):
         """ True if the given path belongs to autopip """
         path = path.resolve() if isinstance(path, PurePath) else path
-        return str(path).startswith(str(self.install_root))
+        return (str(path).startswith(str(self.install_root)) or
+                str(path).startswith('/opt/apps/'))  # Cuz it used to be there / for backward compatibility
