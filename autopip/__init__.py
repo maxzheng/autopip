@@ -8,7 +8,7 @@ from autopip.manager import AppsManager
 def main():
     args = cli_args()
     setup_logger(debug=args.debug)
-    mgr = AppsManager()
+    mgr = AppsManager(debug=args.debug)
 
     try:
         if args.command == 'install':
@@ -24,7 +24,8 @@ def main():
             raise NotImplementedError('Command {} not implemented yet'.format(args.command))
 
     except Exception as e:
-        logging.error(f'! {e}', exc_info=args.debug)
+        if str(e):
+            logging.error(f'! {e}', exc_info=args.debug)
         sys.exit(1)
 
 

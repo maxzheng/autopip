@@ -28,12 +28,22 @@ def mock_run(monkeypatch):
 
 @pytest.fixture()
 def autopip(monkeypatch, caplog):
-    def _run(args, isatty=True):
+    def _run(args, isatty=True, raises=None):
         if isinstance(args, str):
             args = args.split()
+
         monkeypatch.setattr('sys.argv', ['autopip', '--debug'] + args)
         monkeypatch.setattr('sys.stdout.isatty', Mock(return_value=True))
+
         caplog.clear()
-        main()
-        return caplog.text
+
+        if raises:
+            with pytest.raises(raises) as e:
+                main()
+            return caplog.text, e
+
+        else:
+            main()
+            return caplog.text
+
     return _run

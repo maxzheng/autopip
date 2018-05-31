@@ -17,7 +17,10 @@ from autopip import crontab, exceptions
 class AppsManager:
     """ Manages apps """
 
-    def __init__(self):
+    def __init__(self, debug=False):
+        #: Turn on debug mode
+        self.debug = debug
+
         #: An instance of :cls:`AppsPath`
         self.paths = AppsPath()
 
@@ -44,7 +47,7 @@ class AppsManager:
                 self._install_app(app_spec)
 
             except Exception as e:
-                error(f'! {e}')
+                error(f'! {e}', exc_info=self.debug)
                 failed_apps.append(app)
 
         if failed_apps:
@@ -98,7 +101,7 @@ class AppsManager:
 
         if not version:
             if versions:
-                raise ValueError(f'No app version matching {app_spec}. \nAvailable versions: ' + ', '.join(versions))
+                raise ValueError(f'No app version matching {app_spec} \nAvailable versions: ' + ', '.join(versions))
             else:
                 raise ValueError(f'No app version found in {pkg_index_url}')
 
@@ -147,7 +150,7 @@ class AppsManager:
                 app_info.append((app.name, app.current_version, app_path))
 
                 if scripts:
-                    for hide_path, script in enumerate(app.scripts()):
+                    for hide_path, script in enumerate(sorted(app.scripts())):
                         script_symlink = self.paths.symlink_root / script
                         if script_symlink.exists() and str(script_symlink.resolve()).startswith(app_path):
                             script_path = str(script_symlink)

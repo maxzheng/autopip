@@ -11,7 +11,7 @@ def test_install_and_uninstall(monkeypatch, autopip):
     mock_run = Mock()
     monkeypatch.setattr('autopip.crontab.run', mock_run)
 
-    # Install
+    # Install latest
     stdout = autopip('install bumper')
     assert 'Installing bumper to' in stdout
     assert 'Updating symlinks in' in stdout
@@ -28,6 +28,24 @@ def test_install_and_uninstall(monkeypatch, autopip):
                             '2>&1 >> /tmp/.apps/log/cron.log" ) | crontab -')
 
     assert '.apps/bumper/0.1.11' in autopip('list')
+    assert autopip('list --scripts').split('\n')[1].strip().endswith('/bin/bump')
+
+    # Install bad-version
+    stdout, _ = autopip('install bumper==100.*', raises=SystemExit)
+    assert '! No app version matching bumper==100.*' in stdout
+    assert 'Available versions: 0.1.8, 0.1.9, 0.1.10, 0.1.11' in stdout
+
+    # Failed install
+    with monkeypatch.context() as m:
+        mock_run.side_effect = Exception('install failed')
+        m.setattr('autopip.manager.run', mock_run)
+        stdout, _ = autopip('install bumper-lib', raises=SystemExit)
+        assert '! install failed' in stdout
+        mock_run.side_effect = None
+
+    # Already installed
+    stdout = autopip('install bumper')
+    assert stdout == 'bumper is already installed\n'
 
     # Uninstall
     mock_run.reset_mock()
