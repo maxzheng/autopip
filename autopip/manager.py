@@ -43,8 +43,9 @@ class AppsManager:
         if (self.paths.user_access and sys.stdout.isatty() and not list(self.apps) and autopip_path and
                 autopip_path.startswith(str(self.paths.SYSTEM_SYMLINK_ROOT))):
             info('! Based on permission, this will install to your user home instead of %s',
-                 self.paths.SYSTEM_SYMLINK_ROOT)
+                 self.paths.SYSTEM_SYMLINK_ROOT.parent)
             info('  To install for everyone, cancel using CTRL+C and then re-run using sudo.')
+            info('  As using sudo to install is a security risk, please do so only if you trust the app.')
 
         failed_apps = []
 
@@ -194,7 +195,7 @@ class AppsManager:
             autopip_path = shutil.which('autopip')
             if (self.paths.user_access and sys.stdout.isatty() and autopip_path and
                     autopip_path.startswith(str(self.paths.SYSTEM_SYMLINK_ROOT))):
-                info('To see apps installed to %s, re-run using sudo', self.paths.SYSTEM_SYMLINK_ROOT)
+                info('To see apps installed in %s, re-run using sudo.', self.paths.SYSTEM_SYMLINK_ROOT.parent)
 
     def uninstall(self, apps):
         """ Uninstall apps """
@@ -402,10 +403,11 @@ class AppsPath:
 
     System paths are /opt and /usr/local/bin and user paths are in ~
     """
-    #: Directory name to store apps in
-    SYSTEM_INSTALL_ROOT = Path('/opt/apps')
-    SYSTEM_SYMLINK_ROOT = Path('/usr/local/bin')
-    SYSTEM_LOG_ROOT = Path('/var/log/apps')
+    #: Directory name to store apps in.
+    _SYSTEM_BASE = Path('/usr/local')   # Use /usr/local so it is possible for user to own/use them without sudo.
+    SYSTEM_INSTALL_ROOT = _SYSTEM_BASE / 'opt' / 'apps'
+    SYSTEM_SYMLINK_ROOT = _SYSTEM_BASE / 'bin'
+    SYSTEM_LOG_ROOT = _SYSTEM_BASE / 'var' / 'log' / 'autopip'
 
     USER_INSTALL_ROOT = Path('~/.apps').expanduser()
     USER_SYMLINK_ROOT = USER_INSTALL_ROOT / 'bin'

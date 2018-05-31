@@ -9,8 +9,11 @@ To install `autopip` to `/usr/local/bin` for all users::
 
     sudo pip3 install autopip
 
-    # No need to worry about tainting system Python install as autopip has no install dependencies and never will.
-    # If you want to install to your user home, then just skip sudo when running each command (pip3 and autopip)
+    # NOTE: You should only use sudo to install packages that you trust, therefore you are welcome to skip sudo.
+    # If you do skip sudo, pip3 will install autopip to ~/.local/bin instead of /usr/local/bin,
+    # so be sure to add that to your PATH env var.
+    #
+    # And no need to worry about tainting system Python install as autopip has no install dependencies and never will.
 
 Now, you can easily install any apps from PyPI without having to manage virtualenvs or re-run ``pip`` again to update as
 ``autopip`` does all that for you automatically -- one virtualenv per app version and auto-updated atomically and hourly
@@ -18,24 +21,28 @@ via cron service whenever a new version is released:
 
 .. code-block:: console
 
-    $ sudo autopip install workspace-tools
-    Installing workspace-tools to /opt/apps/workspace-tools/3.2.2
+    $ autopip install workspace-tools
+    Installing workspace-tools to /usr/local/opt/apps/workspace-tools/3.2.2
     Updating symlinks in /usr/local/bin
     + wst
+
+    # NOTE: If you do not have permission to write to /usr/local/[bin|opt|var/log], then autopip will install to your
+    # user home at ~/.apps instead of /usr/local, therefore you will need to add ~/.apps/bin to your PATH env var to
+    # easily run scripts from installed apps.
 
 To show currently installed apps and their scripts:
 
 .. code-block:: console
 
-    $ sudo autopip list --scripts
-    ansible-hostmanager  0.2.3   /opt/apps/ansible-hostmanager/0.2.3
+    $ autopip list --scripts
+    ansible-hostmanager  0.2.3   /usr/local/opt/apps/ansible-hostmanager/0.2.3
                                  /usr/local/bin/ah
-    workspace-tools      3.2.2   /opt/apps/workspace-tools/3.2.2
+    workspace-tools      3.2.2   /usr/local/opt/apps/workspace-tools/3.2.2
                                  /usr/local/bin/wst
 
 To uninstall::
 
-    sudo autopip uninstall workspace-tools
+    autopip uninstall workspace-tools
 
 To save typing a few letters, you can also use the ``app`` alias -- short for **a**\ uto\ **p**\ i\ **p** -- instead of
 ``autopip``. And you can even keep `autopip` updated automatically by installing itself:
@@ -43,7 +50,7 @@ To save typing a few letters, you can also use the ``app`` alias -- short for **
 .. code-block:: console
 
     $ sudo app install autopip
-    Installing autopip to /opt/apps/autopip/0.0.5
+    Installing autopip to /usr/local/opt/apps/autopip/0.0.5
     Updating symlinks in /usr/local/bin
     * app (updated)
     * autopip (updated)
