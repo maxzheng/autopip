@@ -1,5 +1,11 @@
-Version 0.0.4
+Version 0.0.5
 ================================================================================
+
+* Bump version
+* Always override links for autopip
+
+Version 0.0.4
+--------------------------------------------------------------------------------
 
 * Update readme
 * Add link to pip conf
