@@ -15,7 +15,7 @@ def main():
             mgr.install(args.apps)
 
         elif args.command == 'list':
-            mgr.list(scripts=args.scripts)
+            mgr.list(name_filter=args.name_filter, scripts=args.scripts)
 
         elif args.command == 'uninstall':
             mgr.uninstall(args.apps)

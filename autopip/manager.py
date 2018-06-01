@@ -144,16 +144,20 @@ class AppsManager:
             if app.is_installed:
                 yield app
 
-    def list(self, scripts=False):
+    def list(self, name_filter=False, scripts=False):
         """
         List installed apps
 
+        :param str name_filter: Filter apps by name
         :param bool scripts: Show scripts
         """
         app_info = []
         info_lens = defaultdict(int)
 
         for app in self.apps:
+            if name_filter and name_filter not in app.name:
+                continue
+
             app_path = str(app.current_path.resolve())
             app_info.append((app.name, app.current_version, app_path))
 
@@ -179,6 +183,9 @@ class AppsManager:
             table_style = '  '.join('{{:{}}}'.format(l) for l in info_lens.values())
             for info_part in app_info:
                 info(table_style.format(*info_part))
+
+        elif name_filter:
+            info(f'No apps matching "{name_filter}"')
 
         else:
             info('No apps are installed yet.')
@@ -443,7 +450,7 @@ class AppsPath:
             system_reasons.append(f'No permission to write to {self.SYSTEM_LOG_ROOT.parent}')
 
         if system_reasons:
-            debug('Not using system paths because:\n%s', '* ' + '\n *'.join(system_reasons))
+            debug('Not using system paths because:\n%s', '* ' + '\n* '.join(system_reasons))
 
         # Check local
         if system_reasons:
