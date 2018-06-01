@@ -1,5 +1,12 @@
-Version 0.2.4
+Version 0.2.5
 ================================================================================
+
+* Add optional name filter for list command
+* Fix duplicate crontab entries and provide more info when already installed
+* Update readme
+
+Version 0.2.4
+--------------------------------------------------------------------------------
 
 * Use different system vs local install paths based on permission
 
