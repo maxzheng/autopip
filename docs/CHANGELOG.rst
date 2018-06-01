@@ -1,5 +1,10 @@
-Version 0.2.3
+Version 0.2.4
 ================================================================================
+
+* Use different system vs local install paths based on permission
+
+Version 0.2.3
+--------------------------------------------------------------------------------
 
 * Override links to /opt/apps as our apps used to be there
 
