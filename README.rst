@@ -30,10 +30,10 @@ via cron service whenever a new version is released:
     Updating symlinks in /usr/local/bin
     + wst
 
-    # Install paths are selected based on your user's permission to write to /opt or /usr/local.
-    # If you do not have permission to write to /usr/local/bin, then autopip will install to your user home at ~/.apps
-    # instead of /usr/local/bin, therefore you will need to add ~/.apps/bin to your PATH env var to easily run scripts
-    # from installed apps. To install to /usr/local/bin, either chmod/chown dirs in /usr/local/* to be writeable by
+    # Install paths are selected based on your user's permission to write to /opt or /usr/local/opt.
+    # If you do not have permission for either, then autopip will install to your user home at ~/.apps,
+    # therefore you will need to add ~/.apps/bin to your PATH env var to easily run scripts from installed apps.
+    # To install script symlinks to /usr/local/bin, either chmod/chown dirs in /usr/local/* to be writeable by
     # your user or run `autopip` using `sudo`, which you should only do if you trust the app.
 
 To show currently installed apps and their scripts:
