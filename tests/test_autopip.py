@@ -18,35 +18,18 @@ def test_autopip(monkeypatch, autopip):
     assert mock_run.call_args_list[0:2] == [
         call('which crontab', shell=True, stderr=-2),
         call('pgrep cron', shell=True, stderr=-2)]
-    install_call = re.sub('/tmp/.*/.apps/', '/tmp/.apps/', re.sub('/home/.*virtualenvs/', '/home/venv/',
+    install_call = re.sub('/tmp/.*/system/', '/tmp/system/', re.sub('/home/.*virtualenvs/', '/home/venv/',
                           mock_run.call_args_list[2][0][0]))
     assert install_call == ('( crontab -l | grep -vF "/home/venv/autopip/bin/autopip install \\"bumper\\" '
-                            '2>&1 >> /tmp/.apps/log/cron.log" ) | crontab -')
+                            '2>&1 >> /tmp/system/log/cron.log" ) | crontab -')
 
-    assert '.apps/bumper/0.1.11' in autopip('list')
+    assert 'system/bumper/0.1.11' in autopip('list')
     assert autopip('list --scripts').split('\n')[1].strip().endswith('/bin/bump')
-
-    # Install bad-version
-    stdout, _ = autopip('install bumper==100.*', raises=SystemExit)
-    assert '! No app version matching bumper==100.*' in stdout
-    assert 'Available versions: 0.1.8, 0.1.9, 0.1.10, 0.1.11' in stdout
-
-    # Failed install
-    with monkeypatch.context() as m:
-        mock_run.side_effect = Exception('install failed')
-        m.setattr('autopip.manager.run', mock_run)
-        stdout, _ = autopip('install bumper-lib', raises=SystemExit)
-        assert '! install failed' in stdout
-        mock_run.side_effect = None
 
     # Already installed
     stdout = autopip('install bumper')
     assert stdout == 'bumper is already installed\n'
-
-    # Install lib
-    stdout, e = autopip('install bumper-lib', raises=SystemExit)
-    assert 'Uninstalling bumper-lib' in stdout
-    assert '! Odd, there are no scripts included in the app' in stdout
+    assert mock_run.call_count == 6
 
     # Uninstall
     mock_run.reset_mock()
@@ -58,3 +41,22 @@ def test_autopip(monkeypatch, autopip):
     ]
 
     assert autopip('list') == 'No apps are installed yet.\n'
+
+
+def test_install_lib(autopip):
+    stdout, e = autopip('install utils-core', raises=SystemExit)
+    assert 'Uninstalling utils-core' in stdout
+    assert '! Odd, there are no scripts included in the app' in stdout
+
+
+def test_install_bad_version(autopip):
+    stdout, _ = autopip('install bumper==100.*', raises=SystemExit)
+    assert '! No app version matching bumper==100.*' in stdout
+    assert 'Available versions: 0.1.8, 0.1.9, 0.1.10, 0.1.11' in stdout
+
+
+def test_install_failed(autopip, monkeypatch, mock_run):
+    mock_run.side_effect = Exception('install failed')
+    monkeypatch.setattr('autopip.manager.run', mock_run)
+    stdout, _ = autopip('install utils-core', raises=SystemExit)
+    assert '! install failed' in stdout

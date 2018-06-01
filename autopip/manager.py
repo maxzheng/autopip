@@ -36,14 +36,13 @@ class AppsManager:
 
         :param list[str] apps: List of apps to install
         """
-        self._ensure_paths()
         self._set_index()
 
         autopip_path = shutil.which('autopip')
-        if (self.paths.user_access and sys.stdout.isatty() and not list(self.apps) and autopip_path and
+        if (self.paths.is_user and sys.stdout.isatty() and not list(self.apps) and autopip_path and
                 autopip_path.startswith(str(self.paths.SYSTEM_SYMLINK_ROOT))):
             info('! Based on permission, this will install to your user home instead of %s',
-                 self.paths.SYSTEM_SYMLINK_ROOT.parent)
+                 self.paths.SYSTEM_SYMLINK_ROOT)
             info('  To install for everyone, cancel using CTRL+C and then re-run using sudo.')
             info('  As using sudo to install is a security risk, please do so only if you trust the app.')
 
@@ -60,12 +59,6 @@ class AppsManager:
 
         if failed_apps:
             raise exceptions.FailedAction()
-
-    def _ensure_paths(self):
-        """ Ensure install and symlink paths are created """
-        self.paths.install_root.mkdir(parents=True, exist_ok=True)
-        self.paths.symlink_root.mkdir(parents=True, exist_ok=True)
-        self.paths.log_root.mkdir(parents=True, exist_ok=True)
 
     def _install_app(self, app_spec):
         """ Install the given app """
@@ -157,8 +150,6 @@ class AppsManager:
 
         :param bool scripts: Show scripts
         """
-        self._ensure_paths()
-
         app_info = []
         info_lens = defaultdict(int)
 
@@ -193,14 +184,12 @@ class AppsManager:
             info('No apps are installed yet.')
 
             autopip_path = shutil.which('autopip')
-            if (self.paths.user_access and sys.stdout.isatty() and autopip_path and
+            if (self.paths.is_user and sys.stdout.isatty() and autopip_path and
                     autopip_path.startswith(str(self.paths.SYSTEM_SYMLINK_ROOT))):
-                info('To see apps installed in %s, re-run using sudo.', self.paths.SYSTEM_SYMLINK_ROOT.parent)
+                info('To see apps installed in %s, re-run using sudo.', self.paths.SYSTEM_SYMLINK_ROOT)
 
     def uninstall(self, apps):
         """ Uninstall apps """
-        self._ensure_paths()
-
         for name in apps:
             if name == 'bin':  # Don't try to remove bin (contains symlinks to scripts) from the app dir
                 continue
@@ -403,61 +392,93 @@ class AppsPath:
 
     System paths are /opt and /usr/local/bin and user paths are in ~
     """
-    #: Directory name to store apps in.
-    _SYSTEM_BASE = Path('/usr/local')   # Use /usr/local so it is possible for user to own/use them without sudo.
-    SYSTEM_INSTALL_ROOT = _SYSTEM_BASE / 'opt' / 'apps'
-    SYSTEM_SYMLINK_ROOT = _SYSTEM_BASE / 'bin'
-    SYSTEM_LOG_ROOT = _SYSTEM_BASE / 'var' / 'log' / 'autopip'
+    # System install paths (e.g. root)
+    SYSTEM_INSTALL_ROOT = Path('/opt/apps')
+    SYSTEM_SYMLINK_ROOT = Path('/usr/local/bin')
+    SYSTEM_LOG_ROOT = Path('/var/log/autopip')
 
+    # Local install paths (e.g. user owned /usr/local on macOS)
+    _LOCAL_BASE = Path('/usr/local')
+    LOCAL_INSTALL_ROOT = _LOCAL_BASE / 'opt' / 'apps'
+    LOCAL_SYMLINK_ROOT = _LOCAL_BASE / 'bin'
+    LOCAL_LOG_ROOT = _LOCAL_BASE / 'var' / 'log' / 'autopip'
+
+    # User install paths
     USER_INSTALL_ROOT = Path('~/.apps').expanduser()
     USER_SYMLINK_ROOT = USER_INSTALL_ROOT / 'bin'
     USER_LOG_ROOT = USER_INSTALL_ROOT / 'log'
 
     def __init__(self):
-        #: A list of reasons why we don't have system access
-        self.system_access_denied_reasons = self._check_system_access()
+        #: Root to install apps. This will be set at runtime based on permission by :meth:`_set_roots`
+        self.install_root = None
 
-        #: Indicates if we have access to system resources
-        self.system_access = not self.system_access_denied_reasons
+        #: Root to install symlinks. This will be set at runtime based on permission by :meth:`_set_roots`
+        self.symlink_root = None
 
-        #: Indicates if we should act on user resources as we do not have access to system resources.
-        self.user_access = not self.system_access
+        #: Root to write log files. This will be set at runtime based on permission by :meth:`_set_roots`
+        self.log_root = None
 
-    def _check_system_access(self):
-        """ Check to see if we have access to system resources and return the reasons """
-        reasons = []
+        #: Indicates if we are using user paths as we do not have access to system paths.
+        self.is_user = False
 
-        if not (os.access(self.SYSTEM_INSTALL_ROOT.parent, os.W_OK) or os.access(self._SYSTEM_BASE, os.W_OK)):
-            reasons.append(f'No permission to write to {self.SYSTEM_INSTALL_ROOT.parent}')
+        self._set_roots()
 
-        if not (os.access(self.SYSTEM_SYMLINK_ROOT, os.W_OK) or os.access(self._SYSTEM_BASE, os.W_OK)):
-            reasons.append(f'No permission to write to {self.SYSTEM_SYMLINK_ROOT}')
+    def _set_roots(self):
+        """ Check to see if we have access to system paths and set roots accordingly. """
+        system_reasons = []
+        local_reasons = []
 
-        if not (os.access(self.SYSTEM_LOG_ROOT.parent, os.W_OK) or
-                os.access(self.SYSTEM_LOG_ROOT.parent.parent, os.W_OK) or
-                os.access(self._SYSTEM_BASE, os.W_OK)):
-            reasons.append(f'No permission to write to {self.SYSTEM_LOG_ROOT.parent}')
+        # Check system
+        if not os.access(self.SYSTEM_INSTALL_ROOT.parent, os.W_OK):
+            system_reasons.append(f'No permission to write to {self.SYSTEM_INSTALL_ROOT.parent}')
 
-        if reasons:
-            debug('Can not use system paths because:\n%s', '\n'.join(reasons))
+        if not os.access(self.SYSTEM_SYMLINK_ROOT, os.W_OK):
+            system_reasons.append(f'No permission to write to {self.SYSTEM_SYMLINK_ROOT}')
 
-        return reasons
+        if not (os.access(self.SYSTEM_LOG_ROOT.parent, os.W_OK)):
+            system_reasons.append(f'No permission to write to {self.SYSTEM_LOG_ROOT.parent}')
 
-    @property
-    def install_root(self):
-        return self.SYSTEM_INSTALL_ROOT if self.system_access else self.USER_INSTALL_ROOT
+        if system_reasons:
+            debug('Not using system paths because:\n%s', '* ' + '\n *'.join(system_reasons))
 
-    @property
-    def symlink_root(self):
-        return self.SYSTEM_SYMLINK_ROOT if self.system_access else self.USER_SYMLINK_ROOT
+        # Check local
+        if system_reasons:
+            if not os.access(self.LOCAL_INSTALL_ROOT.parent, os.W_OK):
+                local_reasons.append(f'No permission to write to {self.LOCAL_INSTALL_ROOT.parent}')
 
-    @property
-    def log_root(self):
-        """ Root path to store log files """
-        return self.SYSTEM_LOG_ROOT if self.system_access else self.USER_LOG_ROOT
+            if not os.access(self.LOCAL_SYMLINK_ROOT, os.W_OK):
+                local_reasons.append(f'No permission to write to {self.LOCAL_SYMLINK_ROOT}')
+
+            if not (self.LOCAL_LOG_ROOT.parent.exists() and os.access(self.LOCAL_LOG_ROOT.parent, os.W_OK) or
+                    not self.LOCAL_LOG_ROOT.parent.exists() and os.access(self.LOCAL_LOG_ROOT.parent.parent, os.W_OK)):
+                local_reasons.append(f'No permission to write to {self.LOCAL_LOG_ROOT.parent}')
+
+            if local_reasons:
+                debug('Not using local paths because:\n%s', '* ' + '\n* '.join(local_reasons))
+
+        if not system_reasons:
+            self.install_root = self.SYSTEM_INSTALL_ROOT
+            self.symlink_root = self.SYSTEM_SYMLINK_ROOT
+            self.log_root = self.SYSTEM_LOG_ROOT
+
+        elif not local_reasons:
+            self.install_root = self.LOCAL_INSTALL_ROOT
+            self.symlink_root = self.LOCAL_SYMLINK_ROOT
+            self.log_root = self.LOCAL_LOG_ROOT
+
+        else:
+            self.install_root = self.USER_INSTALL_ROOT
+            self.symlink_root = self.USER_SYMLINK_ROOT
+            self.log_root = self.USER_LOG_ROOT
+            self.is_user = True
+
+        self.install_root.mkdir(parents=True, exist_ok=True)
+        self.symlink_root.mkdir(parents=True, exist_ok=True)
+        self.log_root.mkdir(parents=True, exist_ok=True)
 
     def covers(self, path):
         """ True if the given path belongs to autopip """
         path = path.resolve() if isinstance(path, PurePath) else path
-        return (str(path).startswith(str(self.install_root)) or
-                str(path).startswith('/opt/apps/'))  # Cuz it used to be there / for backward compatibility
+        return (str(path).startswith(str(self.SYSTEM_INSTALL_ROOT)) or
+                str(path).startswith(str(self.LOCAL_INSTALL_ROOT)) or
+                str(path).startswith(str(self.USER_INSTALL_ROOT)))

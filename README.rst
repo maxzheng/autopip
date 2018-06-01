@@ -5,14 +5,19 @@ Easily install apps from PyPI and automatically keep them updated.
 
 FYI Currently supports Python 3.x apps only, but 2.x is coming soon.
 
-To install `autopip` to `/usr/local/bin` for all users (recommended)::
+To install `autopip` to `/usr/local/bin` for all users (recommended):
 
-    sudo pip3 install autopip
+.. code-block:: console
 
-    # NOTE: You should only use sudo to install packages that you trust, therefore you are welcome to skip sudo.
-    # If you do skip sudo, then I suggest installing it in a virtual environment.
+    $ sudo pip3 install autopip
+
+    # No need to worry about tainting system Python install as autopip has no install dependencies and never will.
     #
-    # And no need to worry about tainting system Python install as autopip has no install dependencies and never will.
+    # If you are concerned about using `sudo`, then I suggest installing it in a virtual environment and obviously
+    # that is more steps and not available to other users:
+    # 1) python3 -m venv ~/.virtualenvs/autopip
+    # 2) source ~/.virtualenvs/autopip/bin/activate
+    # 3) pip3 install autopip
 
 Now, you can easily install any apps from PyPI without having to manage virtualenvs or re-run ``pip`` again to update as
 ``autopip`` does all that for you automatically -- one virtualenv per app version and auto-updated atomically and hourly
@@ -25,9 +30,11 @@ via cron service whenever a new version is released:
     Updating symlinks in /usr/local/bin
     + wst
 
-    # NOTE: If you do not have permission to write to /usr/local/[bin|opt|var/log], then autopip will install to your
-    # user home at ~/.apps instead of /usr/local, therefore you will need to add ~/.apps/bin to your PATH env var to
-    # easily run scripts from installed apps.
+    # Install paths are selected based on your user's permission to write to /opt or /usr/local.
+    # If you do not have permission to write to /usr/local/bin, then autopip will install to your user home at ~/.apps
+    # instead of /usr/local/bin, therefore you will need to add ~/.apps/bin to your PATH env var to easily run scripts
+    # from installed apps. To install to /usr/local/bin, either chmod/chown dirs in /usr/local/* to be writeable by
+    # your user or run `autopip` using `sudo`, which you should only do if you trust the app.
 
 To show currently installed apps and their scripts:
 

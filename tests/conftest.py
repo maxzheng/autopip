@@ -12,10 +12,24 @@ logging.basicConfig(format='%(message)s', stream=open(os.devnull, 'w'), level=lo
 
 @pytest.fixture(autouse=True)
 def mock_paths(monkeypatch, tmpdir):
-    install_root = Path(tmpdir) / '.apps'
-    monkeypatch.setattr('autopip.manager.AppsPath.USER_INSTALL_ROOT', install_root)
-    monkeypatch.setattr('autopip.manager.AppsPath.USER_SYMLINK_ROOT', install_root / 'bin')
-    monkeypatch.setattr('autopip.manager.AppsPath.USER_LOG_ROOT', install_root / 'log')
+    system_root = Path(tmpdir) / 'system'
+    monkeypatch.setattr('autopip.manager.AppsPath.SYSTEM_INSTALL_ROOT', system_root)
+    monkeypatch.setattr('autopip.manager.AppsPath.SYSTEM_SYMLINK_ROOT', system_root / 'bin')
+    monkeypatch.setattr('autopip.manager.AppsPath.SYSTEM_LOG_ROOT', system_root / 'log')
+    (system_root / 'bin').mkdir(parents=True)
+
+    local_root = Path(tmpdir) / 'local'
+    monkeypatch.setattr('autopip.manager.AppsPath.LOCAL_INSTALL_ROOT', local_root)
+    monkeypatch.setattr('autopip.manager.AppsPath.LOCAL_SYMLINK_ROOT', local_root / 'bin')
+    monkeypatch.setattr('autopip.manager.AppsPath.LOCAL_LOG_ROOT', local_root / 'log')
+    (local_root / 'bin').mkdir(parents=True)
+
+    user_root = Path(tmpdir) / '.apps'
+    monkeypatch.setattr('autopip.manager.AppsPath.USER_INSTALL_ROOT', user_root)
+    monkeypatch.setattr('autopip.manager.AppsPath.USER_SYMLINK_ROOT', user_root / 'bin')
+    monkeypatch.setattr('autopip.manager.AppsPath.USER_LOG_ROOT', user_root / 'log')
+
+    return system_root, local_root, user_root
 
 
 @pytest.fixture()
