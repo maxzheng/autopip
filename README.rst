@@ -13,7 +13,7 @@ To install `autopip` to `/usr/local/bin` for all users (recommended):
 
     # No need to worry about tainting system Python install as autopip has no install dependencies and never will.
     #
-    # If you are concerned about using `sudo`, then I suggest installing it in a virtual environment and obviously
+    # If you are concerned about using `sudo`, then you can install it in a virtual environment and obviously
     # that is more steps and not available to other users:
     # 1) python3 -m venv ~/.virtualenvs/autopip
     # 2) source ~/.virtualenvs/autopip/bin/activate
@@ -34,7 +34,7 @@ via cron service whenever a new version is released:
     # If you do not have permission for either, then autopip will install to your user home at ~/.apps,
     # therefore you will need to add ~/.apps/bin to your PATH env var to easily run scripts from installed apps.
     # To install script symlinks to /usr/local/bin, either chmod/chown dirs in /usr/local/* to be writeable by
-    # your user or run `autopip` using `sudo`, which you should only do if you trust the app.
+    # your user or run `autopip` using `sudo`.
 
 To show currently installed apps and their scripts:
 
@@ -56,7 +56,7 @@ To save typing a few letters, you can also use the ``app`` alias -- short for **
 .. code-block:: console
 
     $ sudo app install autopip
-    Installing autopip to /usr/local/opt/apps/autopip/0.0.5
+    Installing autopip to /opt/apps/autopip/0.2.4
     Updating symlinks in /usr/local/bin
     * app (updated)
     * autopip (updated)

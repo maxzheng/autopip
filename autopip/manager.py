@@ -325,7 +325,7 @@ class App:
                 continue
 
             if not printed_updating:
-                info('Updating symlinks in {}'.format(self.paths.symlink_root))
+                info('Updating script symlinks in {}'.format(self.paths.symlink_root))
                 printed_updating = True
 
             if script_symlink.exists():
@@ -348,6 +348,9 @@ class App:
                 script_symlink.unlink()
                 info('- '.format(script_symlink.name))
 
+        if not printed_updating:
+            info('Scripts are in {}: {}'.format(self.paths.symlink_root, ', '.join(sorted(current_scripts))))
+
         # Install cronjobs
         if sys.stdout.isatty():  # Skip updating cronjob when run from cron
             autopip_path = shutil.which('autopip')
@@ -355,6 +358,7 @@ class App:
                 raise exceptions.MissingCommandError(
                     'autopip is not available. Please make sure its bin folder is in PATH env var')
             crontab.add(f'{autopip_path} install "{app_spec}" 2>&1 >> {self.paths.log_root / "cron.log"}')
+            info('Auto-update enabled via cron service')
 
     def scripts(self, path=None):
         """ Get scripts for the given path. Defaults to current path for app. """

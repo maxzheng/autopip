@@ -41,7 +41,7 @@ def add(cmd, schedule='? * * * *', cmd_id=None):
             raise ValueError('cmd_id must be a substring of cmd')
 
     else:
-        cmd_id = re.sub('[ &12]*[>|<=].*', '', cmd)
+        cmd_id = re.sub('.*/autopip ', 'autopip ', re.sub('[ &12]*[>|<=].*', '', cmd))
 
     if '?' in schedule:
         schedule = schedule.replace('?', str(randint(0, 59)))
