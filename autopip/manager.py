@@ -417,18 +417,33 @@ class App:
             return pkg_resources.get_distribution(self.name)
 
         except pkg_resources.DistributionNotFound:
+            activated = False
+
             try:
                 activate_this_file = path / 'bin' / 'activate_this.py'
 
                 if not activate_this_file.exists():
                     shutil.copyfile(Path(__file__).parent / 'embedded' / 'activate_this.py', activate_this_file)
 
+                old_os_path = os.environ.get('PATH', '')
+                old_sys_path = list(sys.path)
+                old_prefix = sys.prefix
+
                 exec(open(activate_this_file).read(), dict(__file__=activate_this_file))
+                activated = True
+
                 imp.reload(pkg_resources)
                 return pkg_resources.get_distribution(self.name)
 
             except Exception as e:
                 error('! Can not get package distribution info because: %s', e)
+
+            finally:
+                if activated:
+                    os.environ['PATH'] = old_os_path
+                    sys.path = old_sys_path
+                    sys.prefix = old_prefix
+                    imp.reload(pkg_resources)
 
     def uninstall(self):
         """ Uninstall app """
