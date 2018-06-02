@@ -319,12 +319,16 @@ class App:
 
         # Install cronjobs
         if sys.stdout.isatty():  # Skip updating cronjob when run from cron
-            autopip_path = shutil.which('autopip')
-            if not autopip_path:
-                raise exceptions.MissingCommandError(
-                    'autopip is not available. Please make sure its bin folder is in PATH env var')
-            crontab.add(f'{autopip_path} install "{app_spec}" 2>&1 >> {self.paths.log_root / "cron.log"}')
-            info('Auto-update enabled via cron service')
+            try:
+                autopip_path = shutil.which('autopip')
+                if not autopip_path:
+                    raise exceptions.MissingCommandError(
+                        'autopip is not available. Please make sure its bin folder is in PATH env var')
+                crontab.add(f'{autopip_path} install "{app_spec}" 2>&1 >> {self.paths.log_root / "cron.log"}')
+                info('Auto-update enabled via cron service')
+
+            except Exception as e:
+                error('! Auto-update was not enabled because: %s', e)
 
         # Install script symlinks
         prev_scripts = self.scripts(prev_version_path) if prev_version_path else set()
