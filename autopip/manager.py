@@ -382,11 +382,14 @@ class App:
             if console_scripts:
                 return set(console_scripts.keys())
 
-            records = dist.get_metadata('RECORD')
+            try:
+                records = dist.get_metadata('RECORD')
+            except Exception:
+                records = dist.get_metadata('installed-files.txt')
 
             if records:
                 scripts = set()
-                bin_re = re.compile('../bin/([^,]+),')
+                bin_re = re.compile('../bin/([^,]+),?')
 
                 for line in records.split('\n'):
                     match = bin_re.search(line)
