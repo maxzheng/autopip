@@ -1,5 +1,10 @@
-Version 0.3.0
+Version 0.3.1
 ================================================================================
+
+* Prevent autopip from being uninstalled when there are other apps
+
+Version 0.3.0
+--------------------------------------------------------------------------------
 
 * Deactivate virtualenv after getting distribution
 
