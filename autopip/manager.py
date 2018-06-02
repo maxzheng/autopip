@@ -367,7 +367,7 @@ class App:
                 script_symlink.unlink()
                 info('- '.format(script_symlink.name))
 
-        if not printed_updating:
+        if not printed_updating and sys.stdout.isatty():
             info('Scripts are in {}: {}'.format(self.paths.symlink_root, ', '.join(sorted(current_scripts))))
 
     def scripts(self, path=None) -> set:
