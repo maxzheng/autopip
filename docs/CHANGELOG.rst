@@ -1,5 +1,10 @@
-Version 0.2.5
+Version 0.2.6
 ================================================================================
+
+* Get scripts via entry point or installed file record
+
+Version 0.2.5
+--------------------------------------------------------------------------------
 
 * Add optional name filter for list command
 * Fix duplicate crontab entries and provide more info when already installed
