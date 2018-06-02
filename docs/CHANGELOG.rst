@@ -1,5 +1,10 @@
-Version 0.2.7
+Version 0.2.8
 ================================================================================
+
+* Soft fail for auto-update via cron
+
+Version 0.2.7
+--------------------------------------------------------------------------------
 
 * Fall back to installed-files.txt if RECORD is not found
 
