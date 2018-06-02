@@ -1,5 +1,10 @@
-Version 0.2.6
+Version 0.2.7
 ================================================================================
+
+* Fall back to installed-files.txt if RECORD is not found
+
+Version 0.2.6
+--------------------------------------------------------------------------------
 
 * Get scripts via entry point or installed file record
 
