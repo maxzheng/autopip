@@ -202,6 +202,10 @@ class AppsManager:
             if name == 'bin':  # Don't try to remove bin (contains symlinks to scripts) from the app dir
                 continue
 
+            if name == 'autopip' and len(list(self.apps)) > 1:
+                error('! autopip can not be uninstalled until other apps are uninstalled')
+                continue
+
             app = App(name, self.paths)
             if app.is_installed:
                 app.uninstall()
