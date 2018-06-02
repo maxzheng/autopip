@@ -13,7 +13,7 @@ def test_autopip(monkeypatch, autopip):
     assert 'Installing bumper to' in stdout
     assert 'Updating script symlinks in' in stdout
     assert '+ bump' in stdout
-    assert len(stdout.split('\n')) == 6
+    assert len(stdout.split('\n')) == 5
 
     assert len(mock_run.call_args_list) == 3
     assert mock_run.call_args_list[0:2] == [
@@ -33,8 +33,8 @@ def test_autopip(monkeypatch, autopip):
     stdout = autopip('install bumper')
     assert re.sub('/tmp/.*/system', '/tmp/system', stdout) == """\
 bumper is already installed
-Scripts are in /tmp/system/bin: bump, chardetect
 Auto-update enabled via cron service
+Scripts are in /tmp/system/bin: bump
 """
     assert mock_run.call_count == 6
 

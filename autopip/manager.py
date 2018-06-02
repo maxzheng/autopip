@@ -1,9 +1,10 @@
 from configparser import RawConfigParser
 from collections import defaultdict
+import imp
 from logging import info, error, debug
 import os
 from pathlib import Path, PurePath
-from pkg_resources import parse_requirements
+import pkg_resources
 import re
 import shutil
 from subprocess import check_output as run, CalledProcessError, STDOUT
@@ -50,7 +51,7 @@ class AppsManager:
 
         for app in apps:
             try:
-                app_spec = next(iter(parse_requirements(app)))
+                app_spec = next(iter(pkg_resources.parse_requirements(app)))
                 self._install_app(app_spec)
 
             except Exception as e:
@@ -306,10 +307,7 @@ class App:
             for path in [p for p in self.path.iterdir() if p not in important_paths]:
                 shutil.rmtree(path, ignore_errors=True)
 
-        # Install script symlinks
-        current_bin_path = self.current_path / 'bin'
-        prev_bin_path = prev_version_path / 'bin' if prev_version_path else None
-        current_scripts = self.scripts(current_bin_path)
+        current_scripts = self.scripts()
 
         if not current_scripts:
             self.uninstall()
@@ -319,14 +317,24 @@ class App:
                 '  If you are the app owner, make sure to setup entry_points in setup.py.\n'
                 '  See http://setuptools.readthedocs.io/en/latest/setuptools.html#automatic-script-creation')
 
-        prev_scripts = self.scripts(prev_bin_path) if prev_bin_path else set()
+        # Install cronjobs
+        if sys.stdout.isatty():  # Skip updating cronjob when run from cron
+            autopip_path = shutil.which('autopip')
+            if not autopip_path:
+                raise exceptions.MissingCommandError(
+                    'autopip is not available. Please make sure its bin folder is in PATH env var')
+            crontab.add(f'{autopip_path} install "{app_spec}" 2>&1 >> {self.paths.log_root / "cron.log"}')
+            info('Auto-update enabled via cron service')
+
+        # Install script symlinks
+        prev_scripts = self.scripts(prev_version_path) if prev_version_path else set()
         old_scripts = prev_scripts - current_scripts
 
         printed_updating = False
 
         for script in sorted(current_scripts):
             script_symlink = self.paths.symlink_root / script
-            script_path = current_bin_path / script
+            script_path = self.current_path / 'bin' / script
 
             if script_symlink.resolve() == script_path.resolve():
                 continue
@@ -358,30 +366,62 @@ class App:
         if not printed_updating:
             info('Scripts are in {}: {}'.format(self.paths.symlink_root, ', '.join(sorted(current_scripts))))
 
-        # Install cronjobs
-        if sys.stdout.isatty():  # Skip updating cronjob when run from cron
-            autopip_path = shutil.which('autopip')
-            if not autopip_path:
-                raise exceptions.MissingCommandError(
-                    'autopip is not available. Please make sure its bin folder is in PATH env var')
-            crontab.add(f'{autopip_path} install "{app_spec}" 2>&1 >> {self.paths.log_root / "cron.log"}')
-            info('Auto-update enabled via cron service')
-
-    def scripts(self, path=None):
+    def scripts(self, path=None) -> set:
         """ Get scripts for the given path. Defaults to current path for app. """
         if not path:
             if not self.current_path:
-                return []
+                return set()
 
-            path = self.current_path / 'bin'
+            path = self.current_path
 
-        scripts = set()
-        for script in path.iterdir():
-            if any(p for p in self.SKIP_SCRIPT_PREFIXES if script.name.startswith(p)):
-                continue
-            scripts.add(script.name)
+        dist = self._pkg_distribution(path=path)
 
-        return scripts
+        if dist:
+            console_scripts = dist.get_entry_map('console_scripts')
+
+            if console_scripts:
+                return set(console_scripts.keys())
+
+            records = dist.get_metadata('RECORD')
+
+            if records:
+                scripts = set()
+                bin_re = re.compile('../bin/([^,]+),')
+
+                for line in records.split('\n'):
+                    match = bin_re.search(line)
+
+                    if match:
+                        scripts.add(match.group(1))
+
+                return scripts
+
+        return set()
+
+    def _pkg_distribution(self, path=None):
+        """ Get pkg_resources.Distribution() for the given path (defaults to current path) """
+        if not path:
+            if not self.current_path:
+                return
+
+            path = self.current_path
+
+        try:
+            return pkg_resources.get_distribution(self.name)
+
+        except pkg_resources.DistributionNotFound:
+            try:
+                activate_this_file = path / 'bin' / 'activate_this.py'
+
+                if not activate_this_file.exists():
+                    shutil.copyfile(Path(__file__).parent / 'embedded' / 'activate_this.py', activate_this_file)
+
+                exec(open(activate_this_file).read(), dict(__file__=activate_this_file))
+                imp.reload(pkg_resources)
+                return pkg_resources.get_distribution(self.name)
+
+            except Exception as e:
+                error('! Can not get package distribution info because: %s', e)
 
     def uninstall(self):
         """ Uninstall app """
