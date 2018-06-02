@@ -1,5 +1,6 @@
 from configparser import RawConfigParser
 from collections import defaultdict
+from functools import lru_cache
 import imp
 from logging import info, error, debug
 import os
@@ -49,14 +50,19 @@ class AppsManager:
 
         failed_apps = []
 
-        for app in apps:
+        for name in apps:
             try:
-                app_spec = next(iter(pkg_resources.parse_requirements(app)))
-                self._install_app(app_spec)
+                app_spec = next(iter(pkg_resources.parse_requirements(name)))
+                app, updated = self._install_app(app_spec)
+
+                group_specs = app.group_specs()
+                if updated and group_specs:
+                    info('This app has defined "autopip" entry points to install: %s', ' '.join(group_specs))
+                    apps.extend(group_specs)
 
             except Exception as e:
                 error(f'! {e}', exc_info=self.debug)
-                failed_apps.append(app)
+                failed_apps.append(name)
 
         if failed_apps:
             raise exceptions.FailedAction()
@@ -66,7 +72,9 @@ class AppsManager:
         version = self._app_version(app_spec)
 
         app = App(app_spec.name, self.paths)
-        app.install(version, app_spec)
+        updated = app.install(version, app_spec)
+
+        return app, updated
 
     def _app_version(self, app_spec):
         """ Get app version from PyPI """
@@ -208,7 +216,13 @@ class AppsManager:
 
             app = App(name, self.paths)
             if app.is_installed:
+                group_specs = app.group_specs(name_only=True)
                 app.uninstall()
+
+                if group_specs:
+                    info('This app has defined "autopip" entry points to uninstall: %s', ' '.join(group_specs))
+                    apps.extend(group_specs)
+
             else:
                 info(f'{name} is not installed')
 
@@ -227,8 +241,14 @@ class App:
         self.name = name
         self.paths = paths
 
+        #: Path to install all app versions
         self.path = self.paths.install_root / name
+
+        #: Symlink to current version
         self._current_symlink = self.path / 'current'
+
+        # Unique crontab name to to easily add and remove from crontab
+        self._crontab_id = rf'autopip install "{self.name}[^a-z]*"'
 
     @property
     def is_installed(self):
@@ -252,6 +272,7 @@ class App:
 
         :param str version: Version of the app to install
         :param pkg_resources.Requirement app_spec: App version requirement from user
+        :return: True if install or update happened, otherwise False when nothing happened (already installed / non-tty)
         """
         version_path = self.path / version
         prev_version_path = self.current_path and self.current_path.resolve()
@@ -265,7 +286,7 @@ class App:
             if self.current_version == version:
                 # Skip printing / ensuring symlinks / cronjob when running from cron
                 if not sys.stdout.isatty():
-                    return
+                    return False
 
                 info(f'{self.name} is already installed')
 
@@ -273,15 +294,17 @@ class App:
                 info(f'Setting {version} as the current version for {self.name}')
 
         else:
+            old_venv_dir = None
             old_path = None
 
             try:
                 info(f'Installing {self.name} to {version_path}')
                 if 'VIRTUAL_ENV' in os.environ:
-                    venv_dir = os.environ.pop('VIRTUAL_ENV')
+                    old_venv_dir = os.environ.pop('VIRTUAL_ENV')
                     old_path = os.environ['PATH']
                     os.environ['PATH'] = os.pathsep.join([p for p in os.environ['PATH'].split(os.pathsep)
-                                                          if os.path.exists(p) and not p.startswith(venv_dir)])
+                                                          if os.path.exists(p) and not p.startswith(old_venv_dir)])
+
                 run(f"""set -e
                     python3 -m venv {version_path} --without-pip
                     source {version_path / 'bin/activate'}
@@ -298,7 +321,8 @@ class App:
                 raise
 
             finally:
-                if old_path:
+                if old_venv_dir:
+                    os.environ['VIRTUAL_ENV'] = old_venv_dir
                     os.environ['PATH'] = old_path
 
         # Update current symlink
@@ -313,7 +337,7 @@ class App:
 
         current_scripts = self.scripts()
 
-        if not current_scripts:
+        if not (current_scripts or self.group_specs()):
             self.uninstall()
             raise exceptions.InvalidAction(
                 'Odd, there are no scripts included in the app, so there is no point installing it.\n'
@@ -328,7 +352,8 @@ class App:
                 if not autopip_path:
                     raise exceptions.MissingCommandError(
                         'autopip is not available. Please make sure its bin folder is in PATH env var')
-                crontab.add(f'{autopip_path} install "{app_spec}" 2>&1 >> {self.paths.log_root / "cron.log"}')
+                crontab.add(f'{autopip_path} install "{app_spec}" 2>&1 >> {self.paths.log_root / "cron.log"}',
+                            cmd_id=self._crontab_id)
                 info('Auto-update enabled via cron service')
 
             except Exception as e:
@@ -371,17 +396,13 @@ class App:
                 script_symlink.unlink()
                 info('- '.format(script_symlink.name))
 
-        if not printed_updating and sys.stdout.isatty():
+        if not printed_updating and sys.stdout.isatty() and current_scripts:
             info('Scripts are in {}: {}'.format(self.paths.symlink_root, ', '.join(sorted(current_scripts))))
 
-    def scripts(self, path=None) -> set:
-        """ Get scripts for the given path. Defaults to current path for app. """
-        if not path:
-            if not self.current_path:
-                return set()
+        return True
 
-            path = self.current_path
-
+    def scripts(self, path=None):
+        """ Set of scripts for the given app path (defaults to current). """
         dist = self._pkg_distribution(path=path)
 
         if dist:
@@ -409,6 +430,21 @@ class App:
 
         return set()
 
+    def group_specs(self, path=None, name_only=False):
+        """ List of app specs from this app's "autopip" entry points for the given app path (defaults to current)"""
+        app_specs = []
+        dist = self._pkg_distribution(path=path)
+
+        if dist:
+            for app, spec in dist.get_entry_map('autopip').items():
+                if spec.module_name == 'latest' or name_only:
+                    app_specs.append(app)
+                else:
+                    app_specs.append(f'{app}=={spec.module_name}.*')
+
+        return app_specs
+
+    @lru_cache()
     def _pkg_distribution(self, path=None):
         """ Get pkg_resources.Distribution() for the given path (defaults to current path) """
         if not path:
@@ -453,11 +489,12 @@ class App:
         """ Uninstall app """
         info('Uninstalling %s', self.name)
 
-        crontab.remove(f'autopip install "{self.name}')
+        crontab.remove(self._crontab_id)
 
         for script in self.scripts():
             script_symlink = self.paths.symlink_root / script
-            if script_symlink.exists() and str(script_symlink.resolve()).startswith(str(self.path)):
+            if ((script_symlink.exists() or script_symlink.is_symlink()) and
+                    str(script_symlink.resolve()).startswith(str(self.path))):
                 script_symlink.unlink()
 
         shutil.rmtree(self.path)

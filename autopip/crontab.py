@@ -29,7 +29,7 @@ def add(cmd, schedule='? * * * *', cmd_id=None):
     :param str schedule: The schedule to run. Defaults to every hour with a random minute.
                          If '?' is used (default), it will be replaced with a random value from 0 to 59.
     :param str cmd_id: Short version of cmd that we can use to uniquely identify the command for updating purpose.
-                       Defaults to cmd without any redirect chars. It must be a substring of cmd.
+                       Defaults to cmd without any redirect chars. It must a regex that matches cmd.
     """
     _ensure_cron()
 
@@ -37,16 +37,16 @@ def add(cmd, schedule='? * * * *', cmd_id=None):
 
     if cmd_id:
         cmd_id = cmd_id.replace('"', r'\"')
-        if cmd_id not in cmd:
-            raise ValueError('cmd_id must be a substring of cmd')
+        if not re.search(cmd_id.replace('\\', r'\\'), cmd):
+            raise ValueError(f'cmd_id does not match cmd where:\n\tcmd_id = {cmd_id}\n\tcmd = {cmd}')
 
     else:
-        cmd_id = re.sub('.*/autopip ', 'autopip ', re.sub('[ &12]*[>|<=].*', '', cmd))
+        cmd_id = re.sub('[ &12]*[>|<=].*', '', cmd)
 
     if '?' in schedule:
         schedule = schedule.replace('?', str(randint(0, 59)))
 
-    crontab_cmd = (f'( crontab -l | grep -vF "{cmd_id}"; echo "{schedule} PATH=/usr/local/bin:\$PATH {cmd}" )'
+    crontab_cmd = (f'( crontab -l | grep -vi "{cmd_id}"; echo "{schedule} PATH=/usr/local/bin:\$PATH {cmd}" )'
                    ' | crontab -')
     run(crontab_cmd, stderr=STDOUT, shell=True)
 
@@ -64,4 +64,4 @@ def remove(name):
 
     name = name.replace('"', r'\"')
 
-    run(f'( crontab -l | grep -vF "{name}" ) | crontab -', stderr=STDOUT, shell=True)
+    run(f'( crontab -l | grep -vi "{name}" ) | crontab -', stderr=STDOUT, shell=True)
