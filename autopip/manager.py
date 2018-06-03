@@ -232,7 +232,12 @@ class AppsManager:
                 continue
 
             if name == 'autopip' and len(list(self.apps)) > 1:
-                error('! autopip can not be uninstalled until other apps are uninstalled')
+                if apps[-1] == 'autopip':
+                    error('! autopip can not be uninstalled until other apps are uninstalled: %s', ' '.join(
+                        a.name for a in self.apps if a.name != 'autopip'))
+                else:  # Try again after uninstall the other apps
+                    apps.append('autopip')
+
                 continue
 
             app = App(name, self.paths)
