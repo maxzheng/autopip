@@ -10,9 +10,11 @@ import re
 import shutil
 from subprocess import check_output as run, CalledProcessError, STDOUT
 import sys
+from time import time
 import urllib.request
 import urllib.error
 
+from autopip.constants import UpdateFreq
 from autopip import crontab, exceptions
 
 
@@ -32,11 +34,12 @@ class AppsManager:
         # PyPI auth. Tuple of user and password.
         self._index_auth = None
 
-    def install(self, apps):
+    def install(self, apps, update=None):
         """
         Install the given apps
 
         :param list[str] apps: List of apps to install
+        :param UpdateFreq|None update: How often to update
         """
         self._set_index()
 
@@ -53,7 +56,7 @@ class AppsManager:
         for name in apps:
             try:
                 app_spec = next(iter(pkg_resources.parse_requirements(name)))
-                app, updated = self._install_app(app_spec)
+                app, updated = self._install_app(app_spec, update=update)
 
                 group_specs = app.group_specs()
                 if updated and group_specs:
@@ -67,12 +70,22 @@ class AppsManager:
         if failed_apps:
             raise exceptions.FailedAction()
 
-    def _install_app(self, app_spec):
+    def _install_app(self, app_spec, update=None):
         """ Install the given app """
-        version = self._app_version(app_spec)
-
         app = App(app_spec.name, self.paths)
-        updated = app.install(version, app_spec)
+        updated = False
+
+        # Skip update if install was done within the update frequency when run from cron
+        if (sys.stdout.isatty() or not app.is_installed or
+                update and app.path.stat().st_mtime + update.seconds < time()):
+            if app.is_installed:
+                app.path.touch()
+
+            version = self._app_version(app_spec)
+            updated = app.install(version, app_spec, update=update)
+
+        else:
+            debug('App is up to date')
 
         return app, updated
 
@@ -266,12 +279,13 @@ class App:
         if self.current_path:
             return self.current_path.resolve().name
 
-    def install(self, version, app_spec):
+    def install(self, version, app_spec, update=None):
         """
         Install the version of the app if it is not already installed
 
         :param str version: Version of the app to install
         :param pkg_resources.Requirement app_spec: App version requirement from user
+        :param UpdateFreq|None update: How often to update. Choose from hourly, daily, weekly, monthly
         :return: True if install or update happened, otherwise False when nothing happened (already installed / non-tty)
         """
         version_path = self.path / version
@@ -346,14 +360,15 @@ class App:
                 '  See http://setuptools.readthedocs.io/en/latest/setuptools.html#automatic-script-creation')
 
         # Install cronjobs
-        if sys.stdout.isatty():  # Skip updating cronjob when run from cron
+        if sys.stdout.isatty() and update:  # Skip updating cronjob when run from cron
             try:
                 autopip_path = shutil.which('autopip')
                 if not autopip_path:
                     raise exceptions.MissingCommandError(
                         'autopip is not available. Please make sure its bin folder is in PATH env var')
-                crontab.add(f'{autopip_path} install "{app_spec}" 2>&1 >> {self.paths.log_root / "cron.log"}',
-                            cmd_id=self._crontab_id)
+                auto_update = f'--update {update.name.lower()} ' if update and update != UpdateFreq.DEFAULT else ''
+                crontab.add(f'{autopip_path} install "{app_spec}" {auto_update}'
+                            f'2>&1 >> {self.paths.log_root / "cron.log"}', cmd_id=self._crontab_id)
                 info('Auto-update enabled via cron service')
 
             except Exception as e:

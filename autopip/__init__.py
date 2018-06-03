@@ -2,6 +2,7 @@ import argparse
 import logging
 import sys
 
+from autopip.constants import UpdateFreq
 from autopip.manager import AppsManager
 
 
@@ -12,7 +13,7 @@ def main():
 
     try:
         if args.command == 'install':
-            mgr.install(args.apps)
+            mgr.install(args.apps, update=UpdateFreq.from_name(args.update) if args.update else None)
 
         elif args.command == 'list':
             mgr.list(name_filter=args.name_filter, scripts=args.scripts)
@@ -40,6 +41,11 @@ def cli_args():
                                            help='Install apps in their own virtual environments '
                                                 'that automatically updates')
     install_parser.add_argument('apps', nargs='+', help='Apps to install')
+    default_update = UpdateFreq.DEFAULT.name.lower() if parser.prog == 'autopip' else None
+    install_parser.add_argument('--update', choices=[m.name.lower() for m in UpdateFreq],
+                                default=default_update,
+                                help='How often to update the app. {}'.format(
+                                    '[default: %(default)s]' if default_update else ''))
     install_parser.set_defaults(command='install')
 
     list_parser = subparsers.add_parser('list', help='List installed apps')

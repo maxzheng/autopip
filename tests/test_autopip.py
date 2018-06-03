@@ -83,7 +83,7 @@ def test_autopip_group(monkeypatch, autopip):
     monkeypatch.setattr('autopip.manager.App.group_specs', mock_group_specs)
 
     # Install latest
-    stdout = autopip('install developer-tools')
+    stdout = autopip('install developer-tools==0.0.3')
     assert 'Installing developer-tools to' in stdout
     assert 'Updating script symlinks in' in stdout
     assert 'This app has defined "autopip" entry points to install: bumper==0.1.10' in stdout
@@ -109,7 +109,7 @@ def test_autopip_group(monkeypatch, autopip):
     assert autopip('list --scripts').split('\n')[1].strip().endswith('/bin/bump')
 
     # Already installed
-    stdout = autopip('install developer-tools')
+    stdout = autopip('install developer-tools==0.0.3')
     assert re.sub('/tmp/.*/system', '/tmp/system', stdout) == """\
 developer-tools is already installed
 Auto-update enabled via cron service
