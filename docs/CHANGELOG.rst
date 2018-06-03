@@ -1,5 +1,10 @@
-Version 1.0.3
+Version 1.0.4
 ================================================================================
+
+* Remove sudo warning as it should be obvious
+
+Version 1.0.3
+--------------------------------------------------------------------------------
 
 * Uninstall autopip last when doing a group
 
