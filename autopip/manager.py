@@ -50,7 +50,6 @@ class AppsManager:
             info('! Based on permission, this will install to your user home instead of %s',
                  self.paths.SYSTEM_SYMLINK_ROOT)
             info('  To install for everyone, cancel using CTRL+C and then re-run using sudo.')
-            info('  As using sudo to install is a security risk, please do so only if you trust the app.')
 
         failed_apps = []
 
