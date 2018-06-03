@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import IntEnum
 
 
-class UpdateFreq(Enum):
+class UpdateFreq(IntEnum):
     HOURLY = 3600
     DAILY = 86400
     WEEKLY = 604800

@@ -52,7 +52,7 @@ To show currently installed apps and their scripts:
     $ app list --scripts
     ansible-hostmanager  0.2.3   /usr/local/opt/apps/ansible-hostmanager/0.2.3
                                  /usr/local/bin/ah
-    workspace-tools      3.2.2   /usr/local/opt/apps/workspace-tools/3.2.2
+    workspace-tools      3.2.2   /usr/local/opt/apps/workspace-tools/3.2.2      [updates hourly]
                                  /usr/local/bin/wst
 
 To uninstall::

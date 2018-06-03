@@ -1,6 +1,7 @@
 from configparser import RawConfigParser
 from collections import defaultdict
 from functools import lru_cache
+import json
 import imp
 from logging import info, error, debug
 import os
@@ -181,7 +182,8 @@ class AppsManager:
                 continue
 
             app_path = str(app.current_path.resolve())
-            app_info.append((app.name, app.current_version, app_path))
+            update = f"[updates {app.settings()['update']}]" if app.settings().get('update') else ''
+            app_info.append((app.name, app.current_version, app_path, update))
 
             if scripts:
                 hide_path = False
@@ -192,7 +194,7 @@ class AppsManager:
                         if hide_path:
                             script_path = script_path.replace(str(script_symlink.parent) + '/',
                                                               ' ' * len(str(script_symlink.parent)) + ' ')
-                        app_info.append(('', '', script_path))
+                        app_info.append(('', '', script_path, ''))
                         hide_path = True
 
         if app_info:
@@ -202,7 +204,7 @@ class AppsManager:
                     info_lens[i] = len(value) if len(value) > info_lens[i] else info_lens[i]
 
             # Print table
-            table_style = '  '.join('{{:{}}}'.format(l) for l in info_lens.values())
+            table_style = '  '.join('{{:{}}}'.format(l) if l else '{}' for l in info_lens.values())
             for info_part in app_info:
                 info(table_style.format(*info_part))
 
@@ -371,6 +373,8 @@ class App:
                             f'2>&1 >> {self.paths.log_root / "cron.log"}', cmd_id=self._crontab_id)
                 info('Auto-update enabled via cron service')
 
+                self.settings(update=update.name.lower())
+
             except Exception as e:
                 error('! Auto-update was not enabled because: %s', e)
 
@@ -415,6 +419,25 @@ class App:
             info('Scripts are in {}: {}'.format(self.paths.symlink_root, ', '.join(sorted(current_scripts))))
 
         return True
+
+    def settings(self, **new_settings):
+        """ Get or set settings """
+        current_settings = {}
+
+        if self.path.exists():
+            settings_file = self.path / 'settings.json'
+            if settings_file.exists():
+                try:
+                    current_settings.update(json.load(settings_file.open()))
+                except Exception as e:
+                    debug('Could not load app settings: %s', e)
+
+            if new_settings:
+                current_settings.update(new_settings)
+                with settings_file.open('w') as fh:
+                    json.dump(current_settings, fh)
+
+        return current_settings
 
     def scripts(self, path=None):
         """ Set of scripts for the given app path (defaults to current). """
