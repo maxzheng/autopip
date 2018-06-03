@@ -36,7 +36,7 @@ To see why a particular path is selected, append ``--debug`` after ``autopip`` w
 
 To save typing a few letters, you can also use the ``app`` alias -- short for **a**\ uto\ **p**\ i\ **p** -- instead of
 ``autopip``. It is the same as ``autopip`` except it does not auto-update unless you provide a value to ``--update``
-option (e.g. hourly (same as ``autopip``), daily, weekly, monthly)
+option (e.g. hourly, daily, weekly, monthly).
 
 .. code-block:: console
 
@@ -64,7 +64,7 @@ And you can even keep `autopip` updated automatically by installing itself:
 .. code-block:: console
 
     $ sudo autopip install autopip
-    Installing autopip to /opt/apps/autopip/0.2.4
+    Installing autopip to /opt/apps/autopip/1.0.0
     Updating symlinks in /usr/local/bin
     * app (updated)
     * autopip (updated)
