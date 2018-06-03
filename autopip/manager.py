@@ -56,12 +56,18 @@ class AppsManager:
 
         for name in apps:
             try:
+                if isinstance(name, tuple):  # From app.group_specs() below
+                    name, update = name
+                    if update:
+                        update = UpdateFreq.from_name(update)
+
                 app_spec = next(iter(pkg_resources.parse_requirements(name)))
                 app, updated = self._install_app(app_spec, update=update)
 
                 group_specs = app.group_specs()
                 if updated and group_specs:
-                    info('This app has defined "autopip" entry points to install: %s', ' '.join(group_specs))
+                    info('This app has defined "autopip" entry points to install: %s', ' '.join(
+                         s[0] for s in group_specs))
                     apps.extend(group_specs)
 
             except Exception as e:
@@ -371,7 +377,7 @@ class App:
                 auto_update = f'--update {update.name.lower()} ' if update and update != UpdateFreq.DEFAULT else ''
                 crontab.add(f'{autopip_path} install "{app_spec}" {auto_update}'
                             f'2>&1 >> {self.paths.log_root / "cron.log"}', cmd_id=self._crontab_id)
-                info('Auto-update enabled via cron service')
+                info(update.name.title() + ' auto-update enabled via cron service')
 
                 self.settings(update=update.name.lower())
 
@@ -475,10 +481,18 @@ class App:
 
         if dist:
             for app, spec in dist.get_entry_map('autopip').items():
-                if spec.module_name == 'latest' or name_only:
+                if name_only:
                     app_specs.append(app)
+
+                elif spec.module_name == 'latest':
+                    app_specs.append((app, UpdateFreq.DEFAULT.name.lower()))
+
                 else:
-                    app_specs.append(f'{app}=={spec.module_name}.*')
+                    if len(spec.module_name.split('.')) < 3 or spec.extras:     # Wildcard with auto-update
+                        app_specs.append((f'{app}=={spec.module_name}.*',
+                                         next(iter(spec.extras), UpdateFreq.DEFAULT.name.lower())))
+                    else:
+                        app_specs.append((f'{app}=={spec.module_name}', None))  # Specific version without auto-update
 
         return app_specs
 
