@@ -64,7 +64,7 @@ To save typing a few letters, you can also use the ``app`` alias -- short for **
 Now, that's convenience! ;)
 
 To control versioning and uniform installations across multiple hosts/users, you can also define an `autopip`
-installation group using entry points. See example in `developer-tools https://pypi.org/project/developer-tools/`_
+installation group using entry points. See example in `developer-tools <https://pypi.org/project/developer-tools/>`_
 package.
 
 If you need to use a private PyPI index, just configure `index-url` in `~/.pip/pip.conf
