@@ -1,5 +1,6 @@
 import argparse
 import logging
+import signal
 import sys
 
 from autopip.constants import UpdateFreq
@@ -10,6 +11,11 @@ def main():
     args = cli_args()
     setup_logger(debug=args.debug)
     mgr = AppsManager(debug=args.debug)
+
+    signal.signal(signal.SIGALRM, lambda *args, **kwargs: exit("""Uh oh, something is wrong...
+  autopip has been running for an hour and is likely stuck, so exiting to prevent resource issues.
+  Please report this issue at https://github.com/maxzheng/autopip/issues"""))
+    signal.alarm(3600)
 
     try:
         if args.command == 'install':
