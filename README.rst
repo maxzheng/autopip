@@ -24,7 +24,7 @@ via cron service whenever a new version is released:
 
     $ autopip install workspace-tools
     Installing workspace-tools to /usr/local/opt/apps/workspace-tools/3.2.2
-    Auto-update enabled via cron service
+    Hourly auto-update enabled via cron service
     Updating symlinks in /usr/local/bin
     + wst
 
