@@ -1,5 +1,10 @@
-Version 1.0.0
+Version 1.0.1
 ================================================================================
+
+* Update readme
+
+Version 1.0.0
+--------------------------------------------------------------------------------
 
 * Set status to prod/stable
 * Support update frequency from autopip entry group
