@@ -1,5 +1,11 @@
-Version 0.3.1
+Version 0.3.2
 ================================================================================
+
+* Add info about autopip entry points
+* Support autopip entry points to install other apps
+
+Version 0.3.1
+--------------------------------------------------------------------------------
 
 * Prevent autopip from being uninstalled when there are other apps
 
