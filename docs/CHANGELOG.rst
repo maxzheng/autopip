@@ -1,5 +1,10 @@
-Version 0.3.2
+Version 0.3.3
 ================================================================================
+
+* Fix link
+
+Version 0.3.2
+--------------------------------------------------------------------------------
 
 * Add info about autopip entry points
 * Support autopip entry points to install other apps
