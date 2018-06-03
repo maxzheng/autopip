@@ -28,14 +28,15 @@ via cron service whenever a new version is released:
     Updating symlinks in /usr/local/bin
     + wst
 
-Install paths are selected based on your user's permission to write to `/opt` or `/usr/local/opt`.  If you do not have
+Install paths are selected based on your user's permission to write to `/opt` or `/usr/local/opt`. If you do not have
 permission for either, then autopip will install to your user home at `~/.apps`, therefore you will need to add
 `~/.apps/bin` to your PATH env var to easily run scripts from installed apps.  To install script symlinks to
 `/usr/local/bin`, either chmod/chown dirs in `/usr/local/*` to be writeable by your user or run `autopip` using `sudo`.
+To see why a particular path is selected, append ``--debug`` after ``autopip`` when running it.
 
 To save typing a few letters, you can also use the ``app`` alias -- short for **a**\ uto\ **p**\ i\ **p** -- instead of
-``autopip``. It is the same as ``autopip`` except it does not auto-update by default unless you provide a value to
-``--update`` option.
+``autopip``. It is the same as ``autopip`` except it does not auto-update unless you provide a value to ``--update``
+option (e.g. hourly (same as ``autopip``), daily, weekly, monthly)
 
 .. code-block:: console
 
