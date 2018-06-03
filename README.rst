@@ -65,6 +65,7 @@ And you can even keep `autopip` updated automatically by installing itself:
 
     $ sudo autopip install autopip
     Installing autopip to /opt/apps/autopip/1.0.0
+    Hourly auto-update enabled via cron service
     Updating symlinks in /usr/local/bin
     * app (updated)
     * autopip (updated)
