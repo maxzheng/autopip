@@ -1,3 +1,13 @@
+Version 1.0.0
+================================================================================
+
+* Set status to prod/stable
+* Support update frequency from autopip entry group
+* Save/show update frequency
+* Add update frequency info
+* Terminate autopip if running for longer than an hour
+* Add --update option to specify how often to update an app
+
 Version 0.3.4
 ================================================================================
 
