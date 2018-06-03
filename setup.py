@@ -41,5 +41,5 @@ setuptools.setup(
       'Programming Language :: Python :: 3.6',
     ],
 
-    keywords='',
+    keywords='automatically pip virtualenv auto-update apps',
 )
