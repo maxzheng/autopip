@@ -305,8 +305,8 @@ class App:
         important_paths = [version_path, prev_version_path, self._current_symlink]
 
         if not shutil.which('curl'):
-            raise exceptions.MissingCommandError('curl is not available and is required to install pip. '
-                                                 'Please install and then re-run')
+            raise exceptions.MissingError('curl is not available and is required to install pip. '
+                                          'Please install and then re-run')
 
         if version_path.exists():
             if self.current_version == version:
@@ -376,7 +376,7 @@ class App:
             try:
                 autopip_path = shutil.which('autopip')
                 if not autopip_path:
-                    raise exceptions.MissingCommandError(
+                    raise exceptions.MissingError(
                         'autopip is not available. Please make sure its bin folder is in PATH env var')
                 auto_update = f'--update {update.name.lower()} ' if update and update != UpdateFreq.DEFAULT else ''
                 crontab.add(f'{autopip_path} install "{app_spec}" {auto_update}'
@@ -545,7 +545,10 @@ class App:
         """ Uninstall app """
         info('Uninstalling %s', self.name)
 
-        crontab.remove(self._crontab_id)
+        try:
+            crontab.remove(self._crontab_id)
+        except exceptions.MissingError as e:
+            debug(e)
 
         for script in self.scripts():
             script_symlink = self.paths.symlink_root / script

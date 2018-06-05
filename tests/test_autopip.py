@@ -26,7 +26,7 @@ def test_autopip(monkeypatch, autopip):
         'echo "10 * * * * PATH=/usr/local/bin:\$PATH /home/venv/autopip/bin/autopip install \\"bumper\\" 2>&1 '
         '>> /tmp/system/log/cron.log" ) | crontab -')
 
-    assert 'system/bumper/0.1.11' in autopip('list')
+    assert 'system/bumper/0.1.12' in autopip('list')
     assert autopip('list --scripts').split('\n')[1].strip().endswith('/bin/bump')
 
     # Already installed
@@ -59,7 +59,7 @@ def test_install_lib(autopip):
 def test_install_bad_version(autopip):
     stdout, _ = autopip('install bumper==100.*', raises=SystemExit)
     assert '! No app version matching bumper==100.*' in stdout
-    assert 'Available versions: 0.1.8, 0.1.9, 0.1.10, 0.1.11' in stdout
+    assert 'Available versions: 0.1.8, 0.1.9, 0.1.10, 0.1.11, 0.1.12' in stdout
 
 
 def test_install_failed(autopip, monkeypatch, mock_run):

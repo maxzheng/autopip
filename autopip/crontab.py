@@ -3,7 +3,7 @@ import re
 from logging import info
 from subprocess import check_output as run, STDOUT
 
-from autopip.exceptions import MissingCommandError
+from autopip.exceptions import MissingError
 
 
 def _ensure_cron():
@@ -12,7 +12,7 @@ def _ensure_cron():
         run('which crontab', stderr=STDOUT, shell=True)
 
     except Exception:
-        raise MissingCommandError('crontab is not available. Please install cron or ensure PATH is set correctly.')
+        raise MissingError('crontab is not available. Please install cron or ensure PATH is set correctly.')
 
     try:
         run('pgrep cron', stderr=STDOUT, shell=True)

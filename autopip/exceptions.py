@@ -1,5 +1,5 @@
-class MissingCommandError(Exception):
-    """ Indicates a required CLI command is missing """
+class MissingError(Exception):
+    """ Indicates something is missing """
 
 
 class FailedAction(Exception):
