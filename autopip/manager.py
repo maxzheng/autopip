@@ -47,7 +47,7 @@ class AppsManager:
         autopip_path = shutil.which('autopip')
         if (self.paths.is_user and sys.stdout.isatty() and not list(self.apps) and autopip_path and
                 autopip_path.startswith(str(self.paths.SYSTEM_SYMLINK_ROOT))):
-            info('! Based on permission, this will install to your user home instead of %s',
+            info('# Based on permission, this will install to your user home instead of %s',
                  self.paths.SYSTEM_SYMLINK_ROOT)
             info('  To install for everyone, cancel using CTRL+C and then re-run using sudo.')
 
