@@ -1,5 +1,11 @@
-Version 1.0.6
+Version 1.0.7
 ================================================================================
+
+* Ignore missing crontab/cron when uninstalling
+* Add wheel to setup_requires
+
+Version 1.0.6
+--------------------------------------------------------------------------------
 
 * Switch to use # for permission issue
 
