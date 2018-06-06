@@ -1,5 +1,10 @@
-Version 1.0.7
+Version 1.0.8
 ================================================================================
+
+* Use pip to upgrade pip instead of curl as speed seems to be about the same
+
+Version 1.0.7
+--------------------------------------------------------------------------------
 
 * Ignore missing crontab/cron when uninstalling
 * Add wheel to setup_requires
