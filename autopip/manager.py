@@ -304,10 +304,6 @@ class App:
         prev_version_path = self.current_path and self.current_path.resolve()
         important_paths = [version_path, prev_version_path, self._current_symlink]
 
-        if not shutil.which('curl'):
-            raise exceptions.MissingError('curl is not available and is required to install pip. '
-                                          'Please install and then re-run')
-
         if version_path.exists():
             if self.current_version == version:
                 # Skip printing / ensuring symlinks / cronjob when running from cron
@@ -332,9 +328,9 @@ class App:
                                                           if os.path.exists(p) and not p.startswith(old_venv_dir)])
 
                 run(f"""set -e
-                    python3 -m venv {version_path} --without-pip
+                    python3 -m venv {version_path}
                     source {version_path / 'bin/activate'}
-                    curl -s https://bootstrap.pypa.io/get-pip.py | python
+                    pip install --upgrade pip
                     pip install {self.name}=={version}
                     """, executable='/bin/bash', stderr=STDOUT, shell=True)
 
