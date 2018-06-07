@@ -4,7 +4,7 @@ autopip
 Easily install apps from PyPI and automatically keep them updated.
 
 `autopip` automates the creation of a virtual environment using `venv <https://docs.python.org/3/library/venv.html>`_,
-installs any Python package with scripts (i.e. app) from PyPI, and atomically creates symlinks for installed
+installs any Python package with scripts (i.e. app) from PyPI using pip, and atomically creates symlinks for installed
 scripts in `/usr/local/bin` so you can easily use them. Each app version is installed cleanly into its own virtual
 environment. Optionally, it can setup crontab entries to install apps on a schedule to keep them updated automatically.
 
