@@ -16,8 +16,9 @@ To install `autopip` to `/usr/local/bin`::
     sudo pip3 install autopip
 
 No need to worry about tainting system Python install as autopip has no install dependencies and never will.
-Alternatively, you can install it in a virtual environment and obviously that is not available to other users until we
-use ``autopip`` to install itself later::
+
+Alternatively, you can install it in a virtual environment -- the last one that you will ever create manually for
+installing Python apps::
 
     python3 -m venv ~/.virtualenvs/autopip
     source ~/.virtualenvs/autopip/bin/activate
