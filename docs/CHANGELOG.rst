@@ -1,5 +1,10 @@
-Version 1.0.8
+Version 1.0.9
 ================================================================================
+
+* Fix local install access check and update README with chown instruction
+
+Version 1.0.8
+--------------------------------------------------------------------------------
 
 * Use pip to upgrade pip instead of curl as speed seems to be about the same
 
