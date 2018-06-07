@@ -15,7 +15,7 @@ To install `autopip` to `/usr/local/bin`::
 
     sudo pip3 install autopip
 
-No need to worry about tainting system Python install as autopip has no install dependencies and never will.
+No need to worry about tainting system Python install as `autopip` has no install dependencies and never will.
 
 Alternatively, you can install it in a virtual environment -- the last one that you will ever create manually for
 installing Python apps::
@@ -24,7 +24,8 @@ installing Python apps::
     source ~/.virtualenvs/autopip/bin/activate
     pip3 install autopip
 
-Optionally, create install directories and chown to your user so that we can create symlinks in `/usr/local/bin`::
+Optionally, create install directories and chown to your user so that ``autopip`` can create symlinks in
+`/usr/local/bin`::
 
     sudo mkdir /usr/local/opt /usr/local/var
     sudo chown -R $(whoami) /usr/local/*
@@ -40,14 +41,14 @@ Now, you can easily install any apps from PyPI:
     + wst
 
 Install paths are selected based on your user's permission to write to `/opt` or `/usr/local/opt`. If you do not have
-permission for either, then autopip will install to your user home at `~/.apps`, therefore you will need to add
+permission for either, then ``autopip`` will install to your user home at `~/.apps`, therefore you will need to add
 `~/.apps/bin` to your PATH env var to easily run scripts from installed apps.  To install script symlinks to
 `/usr/local/bin`, either chown/chmod dirs in `/usr/local/*` to be writeable by your user as suggested above or run
-`autopip` using `sudo` (i.e. as root). To see why a particular path is selected, append ``--debug`` after ``autopip``
+``autopip`` using ``sudo`` (i.e. as root). To see why a particular path is selected, append ``--debug`` after ``autopip``
 when running it.
 
-To save typing a few letters, you can also use the ``app`` alias -- short for **a**\ uto\ **p**\ i\ **p** -- instead of
-``autopip``. It is the same as ``autopip`` except it does not auto-update unless you provide a value to ``--update``
+To save typing a few letters, you can also use the ``app`` alias -- short for **a**\ uto\ **p**\ i\ **p**. It is the
+same as ``autopip`` except it does not auto-update unless you provide a value to ``--update``
 option (e.g. hourly, daily, weekly, monthly).
 
 .. code-block:: console
@@ -76,7 +77,7 @@ And you can even keep `autopip` updated automatically by installing itself:
 .. code-block:: console
 
     $ app install autopip --update daily
-    Installing autopip to /opt/apps/autopip/1.0.0
+    Installing autopip to /usr/local/opt/apps/autopip/1.0.0
     Daily auto-update enabled via cron service
     Updating symlinks in /usr/local/bin
     * app (updated)
@@ -84,8 +85,8 @@ And you can even keep `autopip` updated automatically by installing itself:
 
 Now, that's convenience! ;)
 
-If you need to use a private PyPI index, just configure `index-url` in `~/.pip/pip.conf
-<https://pip.pypa.io/en/stable/user_guide/#configuration>`_ as `autopip` simply uses `pip` under the hood.
+If you need to use a private PyPI index, just configure `index-url` in `pip.conf
+<https://pip.pypa.io/en/stable/user_guide/#configuration>`_ as `autopip` uses `pip` to install apps.
 
 To control versioning and uniform installations across multiple hosts/users, you can also define an `autopip`
 installation group using entry points. See example in `developer-tools <https://pypi.org/project/developer-tools/>`_
