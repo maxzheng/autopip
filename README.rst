@@ -4,9 +4,10 @@ autopip
 Easily install apps from PyPI and automatically keep them updated.
 
 `autopip` automates the creation of a virtual environment using `venv <https://docs.python.org/3/library/venv.html>`_,
-installs any Python package with scripts (i.e. app) from PyPI using pip, and atomically creates symlinks for installed
-scripts in `/usr/local/bin` so you can easily use them. Each app version is installed cleanly into its own virtual
-environment. Optionally, it can setup crontab entries to install apps on a schedule to keep them updated automatically.
+installs any Python package with scripts (i.e. app) from PyPI using `pip <https://pypi.org/project/pip/>`_, and
+atomically creates symlinks for installed scripts in `/usr/local/bin` so you can easily use them. Each app version is
+installed cleanly into its own virtual environment. Optionally, it can setup crontab entries to install apps on a
+schedule to keep them updated automatically.
 
 FYI Currently supports Python 3.x apps only, but 2.x is coming soon.
 
@@ -88,6 +89,12 @@ If you need to use a private PyPI index, just configure `index-url` in `~/.pip/p
 To control versioning and uniform installations across multiple hosts/users, you can also define an `autopip`
 installation group using entry points. See example in `developer-tools <https://pypi.org/project/developer-tools/>`_
 package.
+
+FAQ
+===
+
+1. Cron jobs have a random minute set during install and runs hourly for all intervals.
+2. Up to two versions of an app is kept at a time.
 
 Links & Contact Info
 ====================
