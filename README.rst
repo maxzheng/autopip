@@ -3,22 +3,31 @@ autopip
 
 Easily install apps from PyPI and automatically keep them updated.
 
+`autopip` automates the creation of a virtual environment using `venv <https://docs.python.org/3/library/venv.html>`_,
+installs any Python package with scripts (i.e. app) from PyPI, and atomically creates symlinks for installed
+scripts in `/usr/local/bin` so you can easily use them. Each app version is installed cleanly into its own virtual
+environment. Optionally, it can setup crontab entries to install apps on a schedule to keep them updated automatically.
+
 FYI Currently supports Python 3.x apps only, but 2.x is coming soon.
 
-To install `autopip` to `/usr/local/bin` for all users (recommended)::
+To install `autopip` to `/usr/local/bin`::
 
     sudo pip3 install autopip
 
 No need to worry about tainting system Python install as autopip has no install dependencies and never will.
-Alternatively, you can install it in a virtual environment and obviously that is not available to other users::
+Alternatively, you can install it in a virtual environment and obviously that is not available to other users until we
+use ``autopip`` to install itself later::
 
     python3 -m venv ~/.virtualenvs/autopip
     source ~/.virtualenvs/autopip/bin/activate
     pip3 install autopip
 
-Now, you can easily install any apps from PyPI without having to manage virtualenvs or re-run ``pip`` again to update as
-``autopip`` does all that for you automatically -- one virtualenv per app version and auto-updated atomically and hourly
-via cron service whenever a new version is released:
+Optionally, create install directories and chown to your user so that we can create symlinks in `/usr/local/bin`::
+
+    sudo mkdir /usr/local/opt /usr/local/var
+    sudo chown -R $(whoami) /usr/local/*
+
+Now, you can easily install any apps from PyPI:
 
 .. code-block:: console
 
@@ -31,8 +40,9 @@ via cron service whenever a new version is released:
 Install paths are selected based on your user's permission to write to `/opt` or `/usr/local/opt`. If you do not have
 permission for either, then autopip will install to your user home at `~/.apps`, therefore you will need to add
 `~/.apps/bin` to your PATH env var to easily run scripts from installed apps.  To install script symlinks to
-`/usr/local/bin`, either chmod/chown dirs in `/usr/local/*` to be writeable by your user or run `autopip` using `sudo`.
-To see why a particular path is selected, append ``--debug`` after ``autopip`` when running it.
+`/usr/local/bin`, either chown/chmod dirs in `/usr/local/*` to be writeable by your user as suggested above or run
+`autopip` using `sudo` (i.e. as root). To see why a particular path is selected, append ``--debug`` after ``autopip``
+when running it.
 
 To save typing a few letters, you can also use the ``app`` alias -- short for **a**\ uto\ **p**\ i\ **p** -- instead of
 ``autopip``. It is the same as ``autopip`` except it does not auto-update unless you provide a value to ``--update``
@@ -57,27 +67,27 @@ To show currently installed apps and their scripts:
 
 To uninstall::
 
-    app uninstall workspace-tools
+    app uninstall ansible-hostmanager
 
 And you can even keep `autopip` updated automatically by installing itself:
 
 .. code-block:: console
 
-    $ sudo autopip install autopip
+    $ app install autopip --update daily
     Installing autopip to /opt/apps/autopip/1.0.0
-    Hourly auto-update enabled via cron service
+    Daily auto-update enabled via cron service
     Updating symlinks in /usr/local/bin
     * app (updated)
     * autopip (updated)
 
 Now, that's convenience! ;)
 
+If you need to use a private PyPI index, just configure `index-url` in `~/.pip/pip.conf
+<https://pip.pypa.io/en/stable/user_guide/#configuration>`_ as `autopip` simply uses `pip` under the hood.
+
 To control versioning and uniform installations across multiple hosts/users, you can also define an `autopip`
 installation group using entry points. See example in `developer-tools <https://pypi.org/project/developer-tools/>`_
 package.
-
-If you need to use a private PyPI index, just configure `index-url` in `~/.pip/pip.conf
-<https://pip.pypa.io/en/stable/user_guide/#configuration>`_ as `autopip` simply uses `pip` under the hood.
 
 Links & Contact Info
 ====================

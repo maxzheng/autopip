@@ -612,13 +612,15 @@ class AppsPath:
 
         # Check local
         if system_reasons:
-            if not os.access(self.LOCAL_INSTALL_ROOT.parent, os.W_OK):
+            if not (os.access(self.LOCAL_INSTALL_ROOT.parent, os.W_OK) or
+                    not self.LOCAL_INSTALL_ROOT.parent.exists() and
+                    os.access(self.LOCAL_INSTALL_ROOT.parent.parent, os.W_OK)):
                 local_reasons.append(f'No permission to write to {self.LOCAL_INSTALL_ROOT.parent}')
 
             if not os.access(self.LOCAL_SYMLINK_ROOT, os.W_OK):
                 local_reasons.append(f'No permission to write to {self.LOCAL_SYMLINK_ROOT}')
 
-            if not (self.LOCAL_LOG_ROOT.parent.exists() and os.access(self.LOCAL_LOG_ROOT.parent, os.W_OK) or
+            if not (os.access(self.LOCAL_LOG_ROOT.parent, os.W_OK) or
                     not self.LOCAL_LOG_ROOT.parent.exists() and os.access(self.LOCAL_LOG_ROOT.parent.parent, os.W_OK)):
                 local_reasons.append(f'No permission to write to {self.LOCAL_LOG_ROOT.parent}')
 

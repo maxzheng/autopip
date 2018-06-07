@@ -26,7 +26,7 @@ def test_autopip(monkeypatch, autopip):
         'echo "10 * * * * PATH=/usr/local/bin:\$PATH /home/venv/autopip/bin/autopip install \\"bumper\\" 2>&1 '
         '>> /tmp/system/log/cron.log" ) | crontab -')
 
-    assert 'system/bumper/0.1.12' in autopip('list')
+    assert 'system/bumper/0.1.13' in autopip('list')
     assert autopip('list --scripts').split('\n')[1].strip().endswith('/bin/bump')
 
     # Already installed
