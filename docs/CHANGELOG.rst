@@ -1,5 +1,10 @@
-Version 1.1.3
+Version 1.1.4
 ================================================================================
+
+* Change suggested update frequency to monthly for autopip and pin to major
+
+Version 1.1.3
+--------------------------------------------------------------------------------
 
 * Update readme
 
