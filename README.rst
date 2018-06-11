@@ -76,9 +76,9 @@ And you can even keep `autopip` updated automatically by installing itself:
 
 .. code-block:: console
 
-    $ app install autopip --update daily
+    $ app install autopip==1.* --update monthly
     Installing autopip to /usr/local/opt/apps/autopip/1.0.0
-    Daily auto-update enabled via cron service
+    Monthly auto-update enabled via cron service
     Updating symlinks in /usr/local/bin
     * app (updated)
     * autopip (updated)
