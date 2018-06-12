@@ -98,7 +98,8 @@ def test_autopip_group(monkeypatch, autopip):
     monkeypatch.setattr('autopip.manager.App.group_specs', mock_group_specs)
 
     # Install latest
-    stdout = autopip('install developer-tools==0.0.3 --update weekly')
+    stdout = autopip('install developer-tools --update weekly')
+    installed_version = stdout.split('\n')[0].split('/')[-1]
     assert 'Installing developer-tools to' in stdout
     assert 'Updating script symlinks in' in stdout
     assert 'This app has defined "autopip" entry points to install: bumper==0.1.10' in stdout
@@ -113,23 +114,30 @@ def test_autopip_group(monkeypatch, autopip):
                           mock_run.call_args_list[-1][0][0]))
     assert install_call == (
         '( crontab -l | grep -vi "autopip install \\"developer-tools[^a-z]*\\""; echo "10 * * * * '
-        'PATH=/usr/local/bin:\$PATH /home/venv/autopip/bin/autopip install \\"developer-tools==0.0.3\\" '
+        'PATH=/usr/local/bin:\$PATH /home/venv/autopip/bin/autopip install \\"developer-tools\\" '
         '--update weekly 2>&1 >> /tmp/system/log/cron.log" ) | crontab -')
 
     assert 'system/bumper/0.1.10' in autopip('list')
-    assert 'system/developer-tools/0.0.3' in autopip('list')
+    assert f'system/developer-tools/{installed_version}' in autopip('list')
     assert autopip('list --scripts').split('\n')[1].strip().endswith('/bin/bump')
 
     # Already installed
-    stdout = autopip('install developer-tools==0.0.3')
+    mock_run.reset_mock()
+    stdout = autopip(f'install developer-tools=={installed_version}')
     assert re.sub('/tmp/.*/system', '/tmp/system', stdout) == """\
 developer-tools is already installed
-Hourly auto-update enabled via cron service
+Auto-update will be disabled since we are pinning to a specific version.
+To enable, re-run without pinning to specific version with --update option
 This app has defined "autopip" entry points to install: bumper==0.1.10
 bumper is already installed
 Scripts are in /tmp/system/bin: bump
 """
-    assert mock_run.call_count == 6
+    assert mock_run.call_args_list == [
+        call('which crontab', shell=True, stderr=-2),
+        call('pgrep cron', shell=True, stderr=-2),
+        call('( crontab -l | grep -vi "autopip install \\"developer-tools[^a-z]*\\"" ) | crontab -',
+             shell=True, stderr=-2)
+    ]
 
     # Uninstall
     mock_run.reset_mock()

@@ -382,21 +382,34 @@ class App:
                 '  See http://setuptools.readthedocs.io/en/latest/setuptools.html#automatic-script-creation')
 
         # Install cronjobs
-        if sys.stdout.isatty() and update:  # Skip updating cronjob when run from cron
-            try:
-                autopip_path = shutil.which('autopip')
-                if not autopip_path:
-                    raise exceptions.MissingError(
-                        'autopip is not available. Please make sure its bin folder is in PATH env var')
-                auto_update = f'--update {update.name.lower()} ' if update and update != UpdateFreq.DEFAULT else ''
-                crontab.add(f'{autopip_path} install "{app_spec}" {auto_update}'
-                            f'2>&1 >> {self.paths.log_root / "cron.log"}', cmd_id=self._crontab_id)
-                info(update.name.title() + ' auto-update enabled via cron service')
+        if sys.stdout.isatty():  # Skip updating cronjob when run from cron
+            pinning = '==' in str(app_spec) and not str(app_spec).endswith('*')
+            if pinning and (self.settings().get('update') or update):
+                info('Auto-update will be disabled since we are pinning to a specific version.')
+                info('To enable, re-run without pinning to specific version with --update option')
 
-                self.settings(update=update.name.lower())
+                if self.settings().get('update'):
+                    self.settings(update=None)
+                    try:
+                        crontab.remove(self._crontab_id)
+                    except exceptions.MissingError as e:
+                        debug(e)
 
-            except Exception as e:
-                error('! Auto-update was not enabled because: %s', e)
+            elif update:
+                try:
+                    autopip_path = shutil.which('autopip')
+                    if not autopip_path:
+                        raise exceptions.MissingError(
+                            'autopip is not available. Please make sure its bin folder is in PATH env var')
+                    auto_update = f'--update {update.name.lower()} ' if update and update != UpdateFreq.DEFAULT else ''
+                    crontab.add(f'{autopip_path} install "{app_spec}" {auto_update}'
+                                f'2>&1 >> {self.paths.log_root / "cron.log"}', cmd_id=self._crontab_id)
+                    info(update.name.title() + ' auto-update enabled via cron service')
+
+                    self.settings(update=update.name.lower())
+
+                except Exception as e:
+                    error('! Auto-update was not enabled because: %s', e)
 
         # Install script symlinks
         prev_scripts = self.scripts(prev_version_path) if prev_version_path else set()
