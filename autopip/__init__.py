@@ -3,7 +3,7 @@ import logging
 import signal
 import sys
 
-from autopip.constants import UpdateFreq
+from autopip.constants import UpdateFreq, INSTALL_TIMEOUT_MSG, WAIT_TIMEOUT_MSG
 from autopip.manager import AppsManager
 
 
@@ -12,14 +12,13 @@ def main():
     setup_logger(debug=args.debug)
     mgr = AppsManager(debug=args.debug)
 
-    signal.signal(signal.SIGALRM, lambda *args, **kwargs: exit("""Uh oh, something is wrong...
-  autopip has been running for an hour and is likely stuck, so exiting to prevent resource issues.
-  Please report this issue at https://github.com/maxzheng/autopip/issues"""))
+    msg = WAIT_TIMEOUT_MSG if args.command == 'install' and args.wait else INSTALL_TIMEOUT_MSG
+    signal.signal(signal.SIGALRM, lambda *args, **kwargs: exit(msg))
     signal.alarm(3600)
 
     try:
         if args.command == 'install':
-            mgr.install(args.apps, update=UpdateFreq.from_name(args.update) if args.update else None)
+            mgr.install(args.apps, update=UpdateFreq.from_name(args.update) if args.update else None, wait=args.wait)
 
         elif args.command == 'list':
             mgr.list(name_filter=args.name_filter, scripts=args.scripts)
@@ -52,6 +51,8 @@ def cli_args():
                                 default=default_update,
                                 help='How often to update the app. {}'.format(
                                     '[default: %(default)s]' if default_update else ''))
+    install_parser.add_argument('--wait', action='store_true', help='Wait for a version newer than installed version, '
+                                                                    'and then install it')
     install_parser.set_defaults(command='install')
 
     list_parser = subparsers.add_parser('list', help='List installed apps')

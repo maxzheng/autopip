@@ -3,7 +3,7 @@ import re
 from mock import Mock, call
 
 
-def test_autopip(monkeypatch, autopip):
+def test_autopip_common(monkeypatch, autopip, capsys):
     mock_run = Mock()
     monkeypatch.setattr('autopip.crontab.run', mock_run)
     monkeypatch.setattr('autopip.crontab.randint', Mock(return_value=10))
@@ -37,6 +37,21 @@ Hourly auto-update enabled via cron service
 Scripts are in /tmp/system/bin: bump
 """
     assert mock_run.call_count == 6
+
+    # Wait for new version
+    mock_sleep = Mock(side_effect=[0, 0, 0, Exception('No new version')])
+    monkeypatch.setattr('autopip.manager.sleep', mock_sleep)
+
+    stdout, e = autopip('install bumper --wait', raises=SystemExit)
+    assert stdout.startswith('! No new version')
+
+    stdout, _ = capsys.readouterr()
+    lines = stdout.split('\n')
+    assert len(lines) == 5
+    assert lines[0] == 'Waiting for new version of bumper to be published...'.ljust(80)
+    assert lines[-2] == '\033[1AWaiting for new version of bumper to be published...'.ljust(80)
+
+    assert mock_sleep.call_count == 4
 
     # Uninstall
     mock_run.reset_mock()

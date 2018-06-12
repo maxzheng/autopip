@@ -1,6 +1,12 @@
 from enum import IntEnum
 
 
+WAIT_TIMEOUT_MSG = 'No new version was published after an hour, so not gonna wait anymore.'
+INSTALL_TIMEOUT_MSG = """Uh oh, something is wrong...
+  autopip has been running for an hour and is likely stuck, so exiting to prevent resource issues.
+  Please report this issue at https://github.com/maxzheng/autopip/issues"""
+
+
 class UpdateFreq(IntEnum):
     HOURLY = 3600
     DAILY = 86400

@@ -11,7 +11,7 @@ import re
 import shutil
 from subprocess import check_output as run, CalledProcessError, STDOUT
 import sys
-from time import time
+from time import time, sleep
 import urllib.request
 import urllib.error
 
@@ -35,12 +35,13 @@ class AppsManager:
         # PyPI auth. Tuple of user and password.
         self._index_auth = None
 
-    def install(self, apps, update=None):
+    def install(self, apps, update=None, wait=False):
         """
         Install the given apps
 
         :param list[str] apps: List of apps to install
         :param UpdateFreq|None update: How often to update
+        :param bool wait: Wait for a newer version than installed version and then install it.
         """
         self._set_index()
 
@@ -52,6 +53,7 @@ class AppsManager:
             info('  To install for everyone, cancel using CTRL+C and then re-run using sudo.')
 
         failed_apps = []
+        printed_wait = False
 
         for name in apps:
             try:
@@ -61,22 +63,32 @@ class AppsManager:
                         update = UpdateFreq.from_name(update)
 
                 app_spec = next(iter(pkg_resources.parse_requirements(name)))
-                app, updated = self._install_app(app_spec, update=update)
+                app, updated = self._install_app(app_spec, update=update, wait=wait)
 
-                group_specs = app.group_specs()
-                if updated and group_specs:
-                    info('This app has defined "autopip" entry points to install: %s', ' '.join(
-                         s[0] for s in group_specs))
-                    apps.extend(group_specs)
+                if updated:
+                    printed_wait = False
+                    group_specs = app.group_specs()
+                    if group_specs:
+                        info('This app has defined "autopip" entry points to install: %s', ' '.join(
+                             s[0] for s in group_specs))
+                        apps.extend(group_specs)
+
+                elif wait:
+                    goback = '\033[1A' if printed_wait else ''
+                    print(f'{goback}Waiting for new version of {name} to be published...'.ljust(80))
+                    sleep(60)
+                    apps.append(name)
+                    printed_wait = True
 
             except Exception as e:
                 error(f'! {e}', exc_info=self.debug)
                 failed_apps.append(name)
+                printed_wait = False
 
         if failed_apps:
             raise exceptions.FailedAction()
 
-    def _install_app(self, app_spec, update=None):
+    def _install_app(self, app_spec, update=None, wait=False):
         """ Install the given app """
         app = App(app_spec.name, self.paths)
         updated = False
@@ -88,7 +100,9 @@ class AppsManager:
                 app.path.touch()
 
             version = self._app_version(app_spec)
-            updated = app.install(version, app_spec, update=update)
+
+            if not wait or version != app.current_version:
+                updated = app.install(version, app_spec, update=update)
 
         else:
             debug('App is up to date')
@@ -313,7 +327,7 @@ class App:
                 info(f'{self.name} is already installed')
 
             else:
-                info(f'Setting {version} as the current version for {self.name}')
+                info(f'{self.name} {version} was previously installed and will be set as the current version')
 
         else:
             old_venv_dir = None
