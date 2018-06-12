@@ -1,5 +1,11 @@
-Version 1.1.4
+Version 1.1.5
 ================================================================================
+
+* Remove cron entry when pinning to a specific version
+* Add --wait option for install to wait until new version is published
+
+Version 1.1.4
+--------------------------------------------------------------------------------
 
 * Change suggested update frequency to monthly for autopip and pin to major
 

@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(
     name='autopip',
-    version='1.1.5',
+    version='1.1.6',
 
     author='Max Zheng',
     author_email='maxzheng.os@gmail.com',
