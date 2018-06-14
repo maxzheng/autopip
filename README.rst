@@ -68,6 +68,14 @@ To show currently installed apps and their scripts:
     workspace-tools      3.2.2   /usr/local/opt/apps/workspace-tools/3.2.2      [updates hourly]
                                  /usr/local/bin/wst
 
+To manually update all apps:
+
+.. code-block:: console
+
+    $ app update
+    ansible-hostmanager is up-to-date
+    workspace-tools is up-to-date
+
 To uninstall::
 
     app uninstall ansible-hostmanager

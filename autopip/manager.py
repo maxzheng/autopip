@@ -71,7 +71,7 @@ class AppsManager:
                     if group_specs:
                         info('This app has defined "autopip" entry points to install: %s', ' '.join(
                              s[0] for s in group_specs))
-                        apps.extend([s for s in group_specs if s[0] not in apps])
+                        apps.extend([s for s in group_specs if s not in apps])
 
                 elif wait:
                     goback = '\033[1A' if printed_wait else ''
@@ -292,7 +292,7 @@ class AppsManager:
                 if settings.get('update'):
                     app_specs.append((settings['app_spec'], settings['update']))
                 elif sys.stdout.isatty():
-                    app_specs.append(settings['app_spec'])
+                    app_specs.append((settings.get('app_spec', app.name), None))
 
             if app_specs:
                 self.install(app_specs, wait=wait)
@@ -434,50 +434,51 @@ class App:
         self.settings(app_spec=str(app_spec))
 
         # Install cronjobs
-        pinning = '==' in str(app_spec) and not str(app_spec).endswith('*')
-        if pinning and (self.settings().get('update') or update):
-            info('Auto-update will be disabled since we are pinning to a specific version.')
-            info('To enable, re-run without pinning to specific version with --update option')
+        if 'update' not in sys.argv:
+            pinning = '==' in str(app_spec) and not str(app_spec).endswith('*')
+            if pinning and (self.settings().get('update') or update):
+                info('Auto-update will be disabled since we are pinning to a specific version.')
+                info('To enable, re-run without pinning to specific version with --update option')
 
-            if self.settings().get('update'):
-                self.settings(update=None)
+                if self.settings().get('update'):
+                    self.settings(update=None)
+                    try:
+                        crontab.remove(self._crontab_id)
+                    except exceptions.MissingError as e:
+                        debug(e)
+
+            elif update:
                 try:
-                    crontab.remove(self._crontab_id)
-                except exceptions.MissingError as e:
-                    debug(e)
+                    autopip_path = shutil.which('autopip')
+                    if not autopip_path:
+                        raise exceptions.MissingError(
+                            'autopip is not available. Please make sure its bin folder is in PATH env var')
 
-        elif update and 'update' not in sys.argv:
-            try:
-                autopip_path = shutil.which('autopip')
-                if not autopip_path:
-                    raise exceptions.MissingError(
-                        'autopip is not available. Please make sure its bin folder is in PATH env var')
+                    # Migrate old crontabs
+                    try:
+                        old_crons = [c for c in crontab.list().decode().split('\n') if c and 'autopip update' not in c]
+                        if old_crons:
+                            cron_re = re.compile('autopip install "(.+)"')
+                            for cron in old_crons:
+                                match = cron_re.search(cron)
+                                if match:
+                                    old_app_spec = next(iter(pkg_resources.parse_requirements(match.group(1))))
+                                    old_app = App(old_app_spec.name, self.paths)
+                                    if old_app.is_installed:
+                                        old_app.settings(app_spec=str(old_app_spec))
+                            crontab.remove('autopip')
 
-                # Migrate old crontabs
-                try:
-                    old_crons = [c for c in crontab.list().decode().split('\n') if c and 'autopip update' not in c]
-                    if old_crons:
-                        cron_re = re.compile('autopip install "(.+)"')
-                        for cron in old_crons:
-                            match = cron_re.search(cron)
-                            if match:
-                                old_app_spec = next(iter(pkg_resources.parse_requirements(match.group(1))))
-                                old_app = App(old_app_spec.name, self.paths)
-                                if old_app.is_installed:
-                                    old_app.settings(app_spec=str(old_app_spec))
-                        crontab.remove('autopip')
+                    except Exception as e:
+                        debug(e)
+
+                    crontab.add(f'{autopip_path} update '
+                                f'2>&1 >> {self.paths.log_root / "cron.log"}', cmd_id='autopip update')
+                    info(update.name.title() + ' auto-update enabled via cron service')
+
+                    self.settings(update=update.name.lower())
 
                 except Exception as e:
-                    debug(e)
-
-                crontab.add(f'{autopip_path} update '
-                            f'2>&1 >> {self.paths.log_root / "cron.log"}', cmd_id='autopip update')
-                info(update.name.title() + ' auto-update enabled via cron service')
-
-                self.settings(update=update.name.lower())
-
-            except Exception as e:
-                error('! Auto-update was not enabled because: %s', e, exc_info=self.debug)
+                    error('! Auto-update was not enabled because: %s', e, exc_info=self.debug)
 
         # Install script symlinks
         prev_scripts = self.scripts(prev_version_path) if prev_version_path else set()
