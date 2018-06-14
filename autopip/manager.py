@@ -273,6 +273,12 @@ class AppsManager:
             else:
                 info(f'{name} is not installed')
 
+        if not list(self.apps):
+            try:
+                crontab.remove('autopip')
+            except Exception as e:
+                debug(e)
+
     def update(self, apps=None, wait=False):
         """
         Update installed apps
@@ -293,6 +299,12 @@ class AppsManager:
 
             if app_specs:
                 self.install(app_specs, wait=wait)
+
+            elif not apps:
+                try:
+                    crontab.remove('autopip')
+                except Exception as e:
+                    debug(e)
 
         elif list(self.apps):
             info('No apps found matching: %s', ', '.join(apps))
@@ -445,17 +457,21 @@ class App:
                         'autopip is not available. Please make sure its bin folder is in PATH env var')
 
                 # Migrate old crontabs
-                old_crons = [c for c in crontab.list().decode().split('\n') if c and 'autopip update' not in c]
-                if old_crons:
-                    cron_re = re.compile('autopip install "(.+)"')
-                    for cron in old_crons:
-                        match = cron_re.search(cron)
-                        if match:
-                            old_app_spec = next(iter(pkg_resources.parse_requirements(match.group(1))))
-                            old_app = App(old_app_spec.name, self.paths)
-                            if old_app.is_installed:
-                                old_app.settings(app_spec=str(old_app_spec))
-                    crontab.remove('autopip')
+                try:
+                    old_crons = [c for c in crontab.list().decode().split('\n') if c and 'autopip update' not in c]
+                    if old_crons:
+                        cron_re = re.compile('autopip install "(.+)"')
+                        for cron in old_crons:
+                            match = cron_re.search(cron)
+                            if match:
+                                old_app_spec = next(iter(pkg_resources.parse_requirements(match.group(1))))
+                                old_app = App(old_app_spec.name, self.paths)
+                                if old_app.is_installed:
+                                    old_app.settings(app_spec=str(old_app_spec))
+                        crontab.remove('autopip')
+
+                except Exception as e:
+                    debug(e)
 
                 crontab.add(f'{autopip_path} update '
                             f'2>&1 >> {self.paths.log_root / "cron.log"}', cmd_id='autopip update')

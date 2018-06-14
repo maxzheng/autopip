@@ -65,7 +65,10 @@ Scripts are in /tmp/system/bin: bump
     assert mock_run.call_args_list == [
         call('which crontab', shell=True, stderr=-2),
         call('pgrep cron', shell=True, stderr=-2),
-        call('( crontab -l | grep -vi "autopip install \\"bumper[^a-z]*\\"" ) | crontab -', shell=True, stderr=-2)
+        call('( crontab -l | grep -vi "autopip install \\"bumper[^a-z]*\\"" ) | crontab -', shell=True, stderr=-2),
+        call('which crontab', shell=True, stderr=-2),
+        call('pgrep cron', shell=True, stderr=-2),
+        call('( crontab -l | grep -vi "autopip" ) | crontab -', shell=True, stderr=-2)
     ]
 
     assert autopip('list') == 'No apps are installed yet.\n'
@@ -163,7 +166,10 @@ Uninstalling bumper
         call('which crontab', shell=True, stderr=-2),
         call('pgrep cron', shell=True, stderr=-2),
         call('( crontab -l | grep -vi "autopip install \\"bumper[^a-z]*\\"" ) | crontab -',
-             shell=True, stderr=-2)
+             shell=True, stderr=-2),
+        call('which crontab', shell=True, stderr=-2),
+        call('pgrep cron', shell=True, stderr=-2),
+        call('( crontab -l | grep -vi "autopip" ) | crontab -', shell=True, stderr=-2)
     ]
 
     assert autopip('list') == 'No apps are installed yet.\n'
