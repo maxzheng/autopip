@@ -1,5 +1,10 @@
-Version 1.2.1
+Version 1.2.2
 ================================================================================
+
+* Remove spec in list command output
+
+Version 1.2.1
+--------------------------------------------------------------------------------
 
 * Remove crontab entry when there are no more auto-update apps
 
