@@ -1,5 +1,10 @@
-Version 1.2.3
+Version 1.2.4
 ================================================================================
+
+* Switch to use ps as pgrep does not work in cron for macOS
+
+Version 1.2.3
+--------------------------------------------------------------------------------
 
 * Add update to readme and fix duplicate updates
 
