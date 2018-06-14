@@ -41,7 +41,7 @@ class AppsManager:
 
         :param list[str] apps: List of apps to install
         :param UpdateFreq|None update: How often to update
-        :param bool wait: Wait for a newer version than installed version and then install it.
+        :param bool wait: Wait for a new version to be published and then install it.
         """
         self._set_index()
 
@@ -57,7 +57,7 @@ class AppsManager:
 
         for name in apps:
             try:
-                if isinstance(name, tuple):  # From app.group_specs() below
+                if isinstance(name, tuple):  # From app.group_specs() or self.update()
                     name, update = name
                     if update:
                         update = UpdateFreq.from_name(update)
@@ -71,7 +71,7 @@ class AppsManager:
                     if group_specs:
                         info('This app has defined "autopip" entry points to install: %s', ' '.join(
                              s[0] for s in group_specs))
-                        apps.extend(group_specs)
+                        apps.extend([s for s in group_specs if s[0] not in apps])
 
                 elif wait:
                     goback = '\033[1A' if printed_wait else ''
@@ -90,7 +90,7 @@ class AppsManager:
 
     def _install_app(self, app_spec, update=None, wait=False):
         """ Install the given app """
-        app = App(app_spec.name, self.paths)
+        app = App(app_spec.name, self.paths, debug=self.debug)
         updated = False
 
         # Skip update if install was done within the update frequency when run from cron
@@ -105,7 +105,7 @@ class AppsManager:
                 updated = app.install(version, app_spec, update=update)
 
         else:
-            debug('App is up to date')
+            debug('App does not need to be updated yet.')
 
         return app, updated
 
@@ -201,7 +201,15 @@ class AppsManager:
                 continue
 
             app_path = str(app.current_path.resolve())
-            update = f"[updates {app.settings()['update']}]" if app.settings().get('update') else ''
+
+            if app.settings().get('update'):
+                app_spec = app.settings().get('app_spec', '')
+                if app_spec:
+                    app_spec = ' to ' + app_spec.lstrip(app.name + '=') if app_spec.lstrip(app.name) else ''
+                update = f"[updates {app.settings()['update']}{app_spec}]"
+            else:
+                update = ''
+
             app_info.append((app.name, app.current_version, app_path, update))
 
             if scripts:
@@ -265,6 +273,34 @@ class AppsManager:
             else:
                 info(f'{name} is not installed')
 
+    def update(self, apps=None, wait=False):
+        """
+        Update installed apps
+
+        :param list apps: List of apps to update. Defaults to all.
+        :param bool wait: Wait for a new version to be published and then install it.
+        """
+        app_instances = list([a for a in self.apps if a.name in apps] if apps else self.apps)
+
+        if app_instances:
+            app_specs = []
+            for app in app_instances:
+                settings = app.settings()
+                if settings.get('update'):
+                    app_specs.append((settings['app_spec'], settings['update']))
+                elif sys.stdout.isatty():
+                    app_specs.append(settings['app_spec'])
+
+            if app_specs:
+                self.install(app_specs, wait=wait)
+
+        elif list(self.apps):
+            info('No apps found matching: %s', ', '.join(apps))
+            info('Available apps: %s', ', '.join([a.name for a in self.apps]))
+
+        else:
+            info('No apps installed yet.')
+
 
 class App:
     """ Represents an app that may or may not be installed on disk """
@@ -272,13 +308,15 @@ class App:
     #: Prefixes of scripts to skip when creating symlinks
     SKIP_SCRIPT_PREFIXES = {'activate', 'pip', 'easy_install', 'python', 'wheel'}
 
-    def __init__(self, name, paths):
+    def __init__(self, name, paths, debug=False):
         """
         :param str name: Name of the app
         :param AppsPath paths: Path paths
+        :param bool debug: Turn on debug mode
         """
         self.name = name
         self.paths = paths
+        self.debug = debug
 
         #: Path to install all app versions
         self.path = self.paths.install_root / name
@@ -324,7 +362,10 @@ class App:
                 if not sys.stdout.isatty():
                     return False
 
-                info(f'{self.name} is already installed')
+                pinned = str(app_spec).lstrip(self.name)
+                pin_info = f' [per spec: {pinned}]' if pinned else ''
+
+                info(f'{self.name} is up-to-date{pin_info}')
 
             else:
                 info(f'{self.name} {version} was previously installed and will be set as the current version')
@@ -381,35 +422,49 @@ class App:
                 '  If you are the app owner, make sure to setup entry_points in setup.py.\n'
                 '  See http://setuptools.readthedocs.io/en/latest/setuptools.html#automatic-script-creation')
 
+        self.settings(app_spec=str(app_spec))
+
         # Install cronjobs
-        if sys.stdout.isatty():  # Skip updating cronjob when run from cron
-            pinning = '==' in str(app_spec) and not str(app_spec).endswith('*')
-            if pinning and (self.settings().get('update') or update):
-                info('Auto-update will be disabled since we are pinning to a specific version.')
-                info('To enable, re-run without pinning to specific version with --update option')
+        pinning = '==' in str(app_spec) and not str(app_spec).endswith('*')
+        if pinning and (self.settings().get('update') or update):
+            info('Auto-update will be disabled since we are pinning to a specific version.')
+            info('To enable, re-run without pinning to specific version with --update option')
 
-                if self.settings().get('update'):
-                    self.settings(update=None)
-                    try:
-                        crontab.remove(self._crontab_id)
-                    except exceptions.MissingError as e:
-                        debug(e)
-
-            elif update:
+            if self.settings().get('update'):
+                self.settings(update=None)
                 try:
-                    autopip_path = shutil.which('autopip')
-                    if not autopip_path:
-                        raise exceptions.MissingError(
-                            'autopip is not available. Please make sure its bin folder is in PATH env var')
-                    auto_update = f'--update {update.name.lower()} ' if update and update != UpdateFreq.DEFAULT else ''
-                    crontab.add(f'{autopip_path} install "{app_spec}" {auto_update}'
-                                f'2>&1 >> {self.paths.log_root / "cron.log"}', cmd_id=self._crontab_id)
-                    info(update.name.title() + ' auto-update enabled via cron service')
+                    crontab.remove(self._crontab_id)
+                except exceptions.MissingError as e:
+                    debug(e)
 
-                    self.settings(update=update.name.lower())
+        elif update and 'update' not in sys.argv:
+            try:
+                autopip_path = shutil.which('autopip')
+                if not autopip_path:
+                    raise exceptions.MissingError(
+                        'autopip is not available. Please make sure its bin folder is in PATH env var')
 
-                except Exception as e:
-                    error('! Auto-update was not enabled because: %s', e)
+                # Migrate old crontabs
+                old_crons = [c for c in crontab.list().decode().split('\n') if c and 'autopip update' not in c]
+                if old_crons:
+                    cron_re = re.compile('autopip install "(.+)"')
+                    for cron in old_crons:
+                        match = cron_re.search(cron)
+                        if match:
+                            old_app_spec = next(iter(pkg_resources.parse_requirements(match.group(1))))
+                            old_app = App(old_app_spec.name, self.paths)
+                            if old_app.is_installed:
+                                old_app.settings(app_spec=str(old_app_spec))
+                    crontab.remove('autopip')
+
+                crontab.add(f'{autopip_path} update '
+                            f'2>&1 >> {self.paths.log_root / "cron.log"}', cmd_id='autopip update')
+                info(update.name.title() + ' auto-update enabled via cron service')
+
+                self.settings(update=update.name.lower())
+
+            except Exception as e:
+                error('! Auto-update was not enabled because: %s', e, exc_info=self.debug)
 
         # Install script symlinks
         prev_scripts = self.scripts(prev_version_path) if prev_version_path else set()
@@ -448,7 +503,7 @@ class App:
                 script_symlink.unlink()
                 info('- '.format(script_symlink.name))
 
-        if not printed_updating and sys.stdout.isatty() and current_scripts:
+        if not printed_updating and sys.stdout.isatty() and current_scripts and 'update' not in sys.argv:
             info('Scripts are in {}: {}'.format(self.paths.symlink_root, ', '.join(sorted(current_scripts))))
 
         return True

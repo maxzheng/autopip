@@ -1,6 +1,5 @@
 from random import randint
 import re
-from logging import info
 from subprocess import check_output as run, STDOUT
 
 from autopip.exceptions import MissingError
@@ -55,7 +54,7 @@ def list(name_filter='autopip'):
     """ List current schedules """
     _ensure_cron()
 
-    info(run(f'crontab -l | grep {name_filter}', stderr=STDOUT, shell=True))
+    return run(f'crontab -l | grep {name_filter}', stderr=STDOUT, shell=True)
 
 
 def remove(name):

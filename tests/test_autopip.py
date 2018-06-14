@@ -1,10 +1,10 @@
 import re
 
-from mock import Mock, call
+from mock import MagicMock, Mock, call
 
 
 def test_autopip_common(monkeypatch, autopip, capsys):
-    mock_run = Mock()
+    mock_run = MagicMock()
     monkeypatch.setattr('autopip.crontab.run', mock_run)
     monkeypatch.setattr('autopip.crontab.randint', Mock(return_value=10))
 
@@ -15,34 +15,40 @@ def test_autopip_common(monkeypatch, autopip, capsys):
     assert '+ bump' in stdout
     assert len(stdout.split('\n')) == 5
 
-    assert len(mock_run.call_args_list) == 3
-    assert mock_run.call_args_list[0:2] == [
+    assert len(mock_run.call_args_list) == 6
+    assert mock_run.call_args_list[0:-1] == [
         call('which crontab', shell=True, stderr=-2),
-        call('pgrep cron', shell=True, stderr=-2)]
-    install_call = re.sub('/tmp/.*/system/', '/tmp/system/', re.sub('/home/.*virtualenvs/', '/home/venv/',
-                          mock_run.call_args_list[-1][0][0]))
-    assert install_call == (
-        '( crontab -l | grep -vi "autopip install \\"bumper[^a-z]*\\""; '
-        'echo "10 * * * * PATH=/usr/local/bin:\$PATH /home/venv/autopip/bin/autopip install \\"bumper\\" 2>&1 '
-        '>> /tmp/system/log/cron.log" ) | crontab -')
+        call('pgrep cron', shell=True, stderr=-2),
+        call('crontab -l | grep autopip', shell=True, stderr=-2),
+        call('which crontab', shell=True, stderr=-2),
+        call('pgrep cron', shell=True, stderr=-2)
+        ]
+    update_call = re.sub('/tmp/.*/system/', '/tmp/system/', re.sub('/home/.*virtualenvs/', '/home/venv/',
+                         mock_run.call_args_list[-1][0][0]))
+    assert update_call == (
+        '( crontab -l | grep -vi "autopip update"; echo "10 * * * * PATH=/usr/local/bin:\$PATH '
+        '/home/venv/autopip/bin/autopip update 2>&1 >> /tmp/system/log/cron.log" ) | crontab -')
 
     assert 'system/bumper/0.1.13' in autopip('list')
     assert autopip('list --scripts').split('\n')[1].strip().endswith('/bin/bump')
 
     # Already installed
+    mock_run.reset_mock()
     stdout = autopip('install bumper')
     assert re.sub('/tmp/.*/system', '/tmp/system', stdout) == """\
-bumper is already installed
+bumper is up-to-date
 Hourly auto-update enabled via cron service
 Scripts are in /tmp/system/bin: bump
 """
     assert mock_run.call_count == 6
 
+    assert autopip('update') == 'bumper is up-to-date\n'
+
     # Wait for new version
     mock_sleep = Mock(side_effect=[0, 0, 0, Exception('No new version')])
     monkeypatch.setattr('autopip.manager.sleep', mock_sleep)
 
-    stdout, e = autopip('install bumper --wait', raises=SystemExit)
+    stdout, e = autopip('update bumper --wait', raises=SystemExit)
     assert stdout.startswith('! No new version')
 
     stdout, _ = capsys.readouterr()
@@ -85,7 +91,7 @@ def test_install_failed(autopip, monkeypatch, mock_run):
 
 
 def test_autopip_group(monkeypatch, autopip):
-    mock_run = Mock()
+    mock_run = MagicMock()
     monkeypatch.setattr('autopip.crontab.run', mock_run)
     monkeypatch.setattr('autopip.crontab.randint', Mock(return_value=10))
 
@@ -106,16 +112,19 @@ def test_autopip_group(monkeypatch, autopip):
     assert '+ bump' in stdout
     assert len(stdout.split('\n')) == 7
 
-    assert len(mock_run.call_args_list) == 3
-    assert mock_run.call_args_list[0:2] == [
+    assert len(mock_run.call_args_list) == 6
+    assert mock_run.call_args_list[0:-1] == [
         call('which crontab', shell=True, stderr=-2),
-        call('pgrep cron', shell=True, stderr=-2)]
-    install_call = re.sub('/tmp/.*/system/', '/tmp/system/', re.sub('/home/.*virtualenvs/', '/home/venv/',
-                          mock_run.call_args_list[-1][0][0]))
-    assert install_call == (
-        '( crontab -l | grep -vi "autopip install \\"developer-tools[^a-z]*\\""; echo "10 * * * * '
-        'PATH=/usr/local/bin:\$PATH /home/venv/autopip/bin/autopip install \\"developer-tools\\" '
-        '--update weekly 2>&1 >> /tmp/system/log/cron.log" ) | crontab -')
+        call('pgrep cron', shell=True, stderr=-2),
+        call('crontab -l | grep autopip', shell=True, stderr=-2),
+        call('which crontab', shell=True, stderr=-2),
+        call('pgrep cron', shell=True, stderr=-2)
+        ]
+    update_call = re.sub('/tmp/.*/system/', '/tmp/system/', re.sub('/home/.*virtualenvs/', '/home/venv/',
+                         mock_run.call_args_list[-1][0][0]))
+    assert update_call == (
+        '( crontab -l | grep -vi "autopip update"; echo "10 * * * * PATH=/usr/local/bin:\$PATH '
+        '/home/venv/autopip/bin/autopip update 2>&1 >> /tmp/system/log/cron.log" ) | crontab -')
 
     assert 'system/bumper/0.1.10' in autopip('list')
     assert f'system/developer-tools/{installed_version}' in autopip('list')
@@ -125,11 +134,11 @@ def test_autopip_group(monkeypatch, autopip):
     mock_run.reset_mock()
     stdout = autopip(f'install developer-tools=={installed_version}')
     assert re.sub('/tmp/.*/system', '/tmp/system', stdout) == """\
-developer-tools is already installed
+developer-tools is up-to-date [per spec: ==1.0.7]
 Auto-update will be disabled since we are pinning to a specific version.
 To enable, re-run without pinning to specific version with --update option
 This app has defined "autopip" entry points to install: bumper==0.1.10
-bumper is already installed
+bumper is up-to-date [per spec: ==0.1.10]
 Scripts are in /tmp/system/bin: bump
 """
     assert mock_run.call_args_list == [
