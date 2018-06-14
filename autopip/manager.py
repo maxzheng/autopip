@@ -203,10 +203,7 @@ class AppsManager:
             app_path = str(app.current_path.resolve())
 
             if app.settings().get('update'):
-                app_spec = app.settings().get('app_spec', '')
-                if app_spec:
-                    app_spec = ' to ' + app_spec.lstrip(app.name + '=') if app_spec.lstrip(app.name) else ''
-                update = f"[updates {app.settings()['update']}{app_spec}]"
+                update = f"[updates {app.settings()['update']}]"
             else:
                 update = ''
 
