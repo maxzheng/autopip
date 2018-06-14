@@ -14,7 +14,7 @@ def _ensure_cron():
         raise MissingError('crontab is not available. Please install cron or ensure PATH is set correctly.')
 
     try:
-        run('pgrep cron', stderr=STDOUT, shell=True)
+        run('ps -ef | grep /usr/sbin/cron | grep -v grep', stderr=STDOUT, shell=True)
 
     except Exception:
         raise RuntimeError('cron service does not seem to be running. Try starting it: sudo service cron start')

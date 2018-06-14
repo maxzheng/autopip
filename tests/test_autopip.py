@@ -18,10 +18,10 @@ def test_autopip_common(monkeypatch, autopip, capsys):
     assert len(mock_run.call_args_list) == 6
     assert mock_run.call_args_list[0:-1] == [
         call('which crontab', shell=True, stderr=-2),
-        call('pgrep cron', shell=True, stderr=-2),
+        call('ps -ef | grep /usr/sbin/cron | grep -v grep', shell=True, stderr=-2),
         call('crontab -l | grep autopip', shell=True, stderr=-2),
         call('which crontab', shell=True, stderr=-2),
-        call('pgrep cron', shell=True, stderr=-2)
+        call('ps -ef | grep /usr/sbin/cron | grep -v grep', shell=True, stderr=-2)
         ]
     update_call = re.sub('/tmp/.*/system/', '/tmp/system/', re.sub('/home/.*virtualenvs/', '/home/venv/',
                          mock_run.call_args_list[-1][0][0]))
@@ -64,10 +64,10 @@ Scripts are in /tmp/system/bin: bump
     assert autopip('uninstall bumper') == 'Uninstalling bumper\n'
     assert mock_run.call_args_list == [
         call('which crontab', shell=True, stderr=-2),
-        call('pgrep cron', shell=True, stderr=-2),
+        call('ps -ef | grep /usr/sbin/cron | grep -v grep', shell=True, stderr=-2),
         call('( crontab -l | grep -vi "autopip install \\"bumper[^a-z]*\\"" ) | crontab -', shell=True, stderr=-2),
         call('which crontab', shell=True, stderr=-2),
-        call('pgrep cron', shell=True, stderr=-2),
+        call('ps -ef | grep /usr/sbin/cron | grep -v grep', shell=True, stderr=-2),
         call('( crontab -l | grep -vi "autopip" ) | crontab -', shell=True, stderr=-2)
     ]
 
@@ -118,10 +118,10 @@ def test_autopip_group(monkeypatch, autopip):
     assert len(mock_run.call_args_list) == 6
     assert mock_run.call_args_list[0:-1] == [
         call('which crontab', shell=True, stderr=-2),
-        call('pgrep cron', shell=True, stderr=-2),
+        call('ps -ef | grep /usr/sbin/cron | grep -v grep', shell=True, stderr=-2),
         call('crontab -l | grep autopip', shell=True, stderr=-2),
         call('which crontab', shell=True, stderr=-2),
-        call('pgrep cron', shell=True, stderr=-2)
+        call('ps -ef | grep /usr/sbin/cron | grep -v grep', shell=True, stderr=-2)
         ]
     update_call = re.sub('/tmp/.*/system/', '/tmp/system/', re.sub('/home/.*virtualenvs/', '/home/venv/',
                          mock_run.call_args_list[-1][0][0]))
@@ -146,7 +146,7 @@ Scripts are in /tmp/system/bin: bump
 """
     assert mock_run.call_args_list == [
         call('which crontab', shell=True, stderr=-2),
-        call('pgrep cron', shell=True, stderr=-2),
+        call('ps -ef | grep /usr/sbin/cron | grep -v grep', shell=True, stderr=-2),
         call('( crontab -l | grep -vi "autopip install \\"developer-tools[^a-z]*\\"" ) | crontab -',
              shell=True, stderr=-2)
     ]
@@ -160,15 +160,15 @@ Uninstalling bumper
 """
     assert mock_run.call_args_list == [
         call('which crontab', shell=True, stderr=-2),
-        call('pgrep cron', shell=True, stderr=-2),
+        call('ps -ef | grep /usr/sbin/cron | grep -v grep', shell=True, stderr=-2),
         call('( crontab -l | grep -vi "autopip install \\"developer-tools[^a-z]*\\"" ) | crontab -',
              shell=True, stderr=-2),
         call('which crontab', shell=True, stderr=-2),
-        call('pgrep cron', shell=True, stderr=-2),
+        call('ps -ef | grep /usr/sbin/cron | grep -v grep', shell=True, stderr=-2),
         call('( crontab -l | grep -vi "autopip install \\"bumper[^a-z]*\\"" ) | crontab -',
              shell=True, stderr=-2),
         call('which crontab', shell=True, stderr=-2),
-        call('pgrep cron', shell=True, stderr=-2),
+        call('ps -ef | grep /usr/sbin/cron | grep -v grep', shell=True, stderr=-2),
         call('( crontab -l | grep -vi "autopip" ) | crontab -', shell=True, stderr=-2)
     ]
 
