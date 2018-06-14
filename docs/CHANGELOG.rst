@@ -1,5 +1,10 @@
-Version 1.2.2
+Version 1.2.3
 ================================================================================
+
+* Add update to readme and fix duplicate updates
+
+Version 1.2.2
+--------------------------------------------------------------------------------
 
 * Remove spec in list command output
 
