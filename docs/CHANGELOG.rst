@@ -1,3 +1,9 @@
+Version 1.2.0
+================================================================================
+
+* Switch to a single crontab entry and add update command.
+  Moved --wait option from install to update command
+
 Version 1.1.5
 ================================================================================
 
