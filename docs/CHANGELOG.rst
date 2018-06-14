@@ -1,5 +1,10 @@
-Version 1.2.0
+Version 1.2.1
 ================================================================================
+
+* Remove crontab entry when there are no more auto-update apps
+
+Version 1.2.0
+--------------------------------------------------------------------------------
 
 * Switch to a single crontab entry and add update command.
   Moved --wait option from install to update command
