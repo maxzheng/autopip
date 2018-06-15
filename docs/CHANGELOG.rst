@@ -1,5 +1,12 @@
-Version 1.2.5
+Version 1.2.6
 ================================================================================
+
+* Add sudo for ln
+* Provide suggestion for updating symlink
+* Add script to help check Python installation
+
+Version 1.2.5
+--------------------------------------------------------------------------------
 
 * Pin to python3.6 when creating venv
 
