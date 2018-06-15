@@ -1,5 +1,11 @@
-Version 1.2.6
+Version 1.2.7
 ================================================================================
+
+* Ensure wheel is installed
+* Move check_venv
+
+Version 1.2.6
+--------------------------------------------------------------------------------
 
 * Add sudo for ln
 * Provide suggestion for updating symlink
