@@ -394,7 +394,7 @@ class App:
                 run(f"""set -e
                     python3.6 -m venv {version_path}
                     source {version_path / 'bin/activate'}
-                    pip install --upgrade pip
+                    pip install --upgrade pip wheel
                     pip install {self.name}=={version}
                     """, executable='/bin/bash', stderr=STDOUT, shell=True)
 
