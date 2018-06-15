@@ -11,7 +11,8 @@ is_linux = platform.system() == 'Linux'
 
 def check_python():
     print('Checking Python...')
-    if not run('which python3', return_output=True):
+    py3_path = run('which python3', return_output=True)
+    if not py3_path:
         error('! Python 3 does not seem to be installed')
         print('  Please install Python 3.6 per http://docs.python-guide.org/en/latest/starting/installation/')
         sys.exit(1)
@@ -21,7 +22,14 @@ def check_python():
     major, minor, _ = map(_int_or, version.split('.', 2))
     if minor < 6:
         error('! Version is', version, 'but should be 3.6+')
-        print('  Please install Python 3.6 per http://docs.python-guide.org/en/latest/starting/installation/')
+
+        py36_path = run('which python3.6', return_output=True)
+        if py36_path:
+            print('  Python 3.6 is installed, so try updating the symlink: ln -sfn ' + py36_path.strip() +
+                  ' ' + py3_path.strip())
+        else:
+            print('  Please install Python 3.6 per http://docs.python-guide.org/en/latest/starting/installation/')
+
         sys.exit(1)
 
 
@@ -75,7 +83,14 @@ def run(cmd, return_output=False, **kwargs):
 
     check_call = subprocess.check_output if return_output else subprocess.check_call
 
-    return check_call(cmd, **kwargs)
+    try:
+        return check_call(cmd, **kwargs)
+
+    except Exception:
+        if return_output:
+            return
+        else:
+            raise
 
 
 def _int_or(value):

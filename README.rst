@@ -9,7 +9,11 @@ atomically creates symlinks for installed scripts in `/usr/local/bin` so you can
 installed cleanly into its own virtual environment. Optionally, it can setup crontab entries to install apps on a
 schedule to keep them updated automatically.
 
-FYI Currently supports Python 3.x apps only, but 2.x is coming soon.
+FYI Currently supports Python 3.6 apps only
+
+Before starting, check your Python installation::
+
+    curl -s https://raw.githubusercontent.com/maxzheng/autopip/master/etc/check-python.py | python
 
 To install `autopip` to `/usr/local/bin`::
 
