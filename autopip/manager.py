@@ -392,7 +392,7 @@ class App:
                                                           if os.path.exists(p) and not p.startswith(old_venv_dir)])
 
                 run(f"""set -e
-                    python3 -m venv {version_path}
+                    python3.6 -m venv {version_path}
                     source {version_path / 'bin/activate'}
                     pip install --upgrade pip
                     pip install {self.name}=={version}
