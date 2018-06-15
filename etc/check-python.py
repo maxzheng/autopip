@@ -33,23 +33,6 @@ def check_python():
         sys.exit(1)
 
 
-def check_venv():
-    print('\nChecking venv...')
-    test_venv_path = '/tmp/check-python-venv'
-
-    try:
-        try:
-            run('python3 -m venv ' + test_venv_path, stderr=subprocess.STDOUT, return_output=True)
-        except Exception:
-            error('! Could not create virtual environment. Please make sure *-venv package is installed.')
-            if is_linux:
-                print('  For Debian/Ubuntu, try: sudo apt install python3.6-venv')
-            sys.exit(1)
-
-    finally:
-        shutil.rmtree(test_venv_path, ignore_errors=True)
-
-
 def check_pip():
     print('\nChecking pip...')
 
@@ -74,6 +57,23 @@ def check_pip():
         print('  See output: ' + version_full.strip())
         print('  Try re-installing it with: curl https://bootstrap.pypa.io/get-pip.py | sudo python3.6')
         sys.exit(1)
+
+
+def check_venv():
+    print('\nChecking venv...')
+    test_venv_path = '/tmp/check-python-venv'
+
+    try:
+        try:
+            run('python3 -m venv ' + test_venv_path, stderr=subprocess.STDOUT, return_output=True)
+        except Exception:
+            error('! Could not create virtual environment. Please make sure *-venv package is installed.')
+            if is_linux:
+                print('  For Debian/Ubuntu, try: sudo apt install python3.6-venv')
+            sys.exit(1)
+
+    finally:
+        shutil.rmtree(test_venv_path, ignore_errors=True)
 
 
 def run(cmd, return_output=False, **kwargs):
