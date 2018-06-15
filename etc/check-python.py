@@ -25,7 +25,7 @@ def check_python():
 
         py36_path = run('which python3.6', return_output=True)
         if py36_path:
-            print('  Python 3.6 is installed, so try updating the symlink: ln -sfn ' + py36_path.strip() +
+            print('  Python 3.6 is installed, so try updating the symlink: sudo ln -sfn ' + py36_path.strip() +
                   ' ' + py3_path.strip())
         else:
             print('  Please install Python 3.6 per http://docs.python-guide.org/en/latest/starting/installation/')
