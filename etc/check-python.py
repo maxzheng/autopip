@@ -84,7 +84,12 @@ def run(cmd, return_output=False, **kwargs):
     check_call = subprocess.check_output if return_output else subprocess.check_call
 
     try:
-        return check_call(cmd, **kwargs)
+        output = check_call(cmd, **kwargs)
+
+        if isinstance(output, bytes):
+            output = output.decode()
+
+        return output
 
     except Exception:
         if return_output:
