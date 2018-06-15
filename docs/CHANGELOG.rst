@@ -1,5 +1,10 @@
-Version 1.2.4
+Version 1.2.5
 ================================================================================
+
+* Pin to python3.6 when creating venv
+
+Version 1.2.4
+--------------------------------------------------------------------------------
 
 * Switch to use ps as pgrep does not work in cron for macOS
 
