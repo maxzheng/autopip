@@ -1,5 +1,14 @@
-Version 1.2.7
+Version 1.2.8
 ================================================================================
+
+* Raise on error
+* Fix typos
+* Check for Python 3.6 instead
+* Test check script
+* Convert to str if bytes
+
+Version 1.2.7
+--------------------------------------------------------------------------------
 
 * Ensure wheel is installed
 * Move check_venv
