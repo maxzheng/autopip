@@ -53,7 +53,9 @@ def check_venv():
 
     try:
         try:
-            run('python' + PY_VERSION + ' -m venv ' + test_venv_path, stderr=subprocess.STDOUT, return_output=True)
+            run('python' + PY_VERSION + ' -m venv ' + test_venv_path, stderr=subprocess.STDOUT, return_output=True,
+                raises=True)
+
         except Exception:
             error('! Could not create virtual environment. Please make sure *-venv package is installed.')
             if IS_LINUX:
@@ -64,7 +66,7 @@ def check_venv():
         shutil.rmtree(test_venv_path, ignore_errors=True)
 
 
-def run(cmd, return_output=False, **kwargs):
+def run(cmd, return_output=False, raises=False, **kwargs):
     print('+ ' + str(cmd))
     if isinstance(cmd, str):
         cmd = cmd.split()
@@ -80,7 +82,7 @@ def run(cmd, return_output=False, **kwargs):
         return output
 
     except Exception:
-        if return_output:
+        if return_output and not raises:
             return
         else:
             raise
