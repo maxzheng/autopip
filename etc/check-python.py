@@ -235,20 +235,20 @@ try:
                 break
 
             except AutoFixSuggestion as e:
+                cmds = e.cmd if isinstance(e.cmd, tuple) else (e.cmd,)
                 if AUTOFIX:
-                    if e.cmd == last_fix:
+                    if cmds == last_fix:
                         error('! Failed to fix automatically, so you gotta fix it yourself.')
                         sys.exit(1)
 
                     else:
-                        cmds = e.cmd if isinstance(e.cmd, tuple) else (e.cmd,)
                         for cmd in cmds:
                             run(cmd, return_output=True, raises=True)
 
-                        last_fix = e.cmd
+                        last_fix = cmds
 
                 else:
-                    print('  ' + str(e) + ': ' + ' && '.join(e.cmd) + '\n')
+                    print('  ' + str(e) + ': ' + ' && '.join(cmds) + '\n')
                     print('# Run the above suggested command(s) manually and then re-run to continue checking,')
                     print('  or re-run using "python - --autofix" to run all suggested commands automatically.')
                     sys.exit(1)
