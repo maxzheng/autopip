@@ -1,5 +1,15 @@
-Version 1.2.8
+Version 1.2.9
 ================================================================================
+
+* Use MissingError instead of RuntimeError for missing cron service
+* Ensure pip3 has correct path before checking version
+* Check Python dev package
+* Check setuptools and wheel
+* Optionally show sudo
+* Add sudo and show output before error
+
+Version 1.2.8
+--------------------------------------------------------------------------------
 
 * Raise on error
 * Fix typos
