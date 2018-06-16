@@ -31,15 +31,15 @@ def check_pip():
         if IS_LINUX:
             print('  If your package repo (e.g. apt) has a *-pip package for Python ' + PY_VERSION +
                   ', then install it from there.')
-            print('  E.g. For Debian/Ubuntu, try: ' + SUDO + 'apt install python3-pip')
+            print('  To install in Debian/Ubuntu, run: ' + SUDO + 'apt install python3-pip')
         sys.exit(1)
 
     version_full = run('pip3 --version', return_output=True)
     version_str = version_full.split()[1]
     version = tuple(map(_int_or, version_str.split('.', 2)))
     if version < (9, 0, 3):
-        error('! Version is', version_str, 'but should be 9.0.3+')
-        print('  To upgrade: ' + SUDO + 'pip3 install -U pip==9.0.3')
+        error('! Version is', version_str + ', but should be 9.0.3+')
+        print('  To upgrade, run: ' + SUDO + 'pip3 install -U pip==9.0.3')
         sys.exit(1)
 
     if 'python' + PY_VERSION not in version_full:
@@ -62,7 +62,7 @@ def check_venv():
         except Exception:
             error('! Could not create virtual environment. Please make sure *-venv package is installed.')
             if IS_LINUX:
-                print('  For Debian/Ubuntu, try: ' + SUDO + 'apt install python' + PY_VERSION + '-venv')
+                print('  To install in Debian/Ubuntu, run: ' + SUDO + 'apt install python' + PY_VERSION + '-venv')
             sys.exit(1)
 
     finally:
@@ -77,14 +77,14 @@ def check_setuptools():
 
     except Exception:
         error('! setuptools is not installed.')
-        print('  To install: ' + SUDO + 'pip3 install setuptools')
+        print('  To install, run: ' + SUDO + 'pip3 install setuptools')
         sys.exit(1)
 
     version_str = version_str.split()[1]
     version = tuple(map(_int_or, version_str.split('.')))
     if version < (39,):
-        error('! Version is', version_str, 'but should be 39+')
-        print('  To upgrade: ' + SUDO + 'pip3 install -U setuptools')
+        error('! Version is', version_str + ', but should be 39+')
+        print('  To upgrade, run: ' + SUDO + 'pip3 install -U setuptools')
         sys.exit(1)
 
 
@@ -96,20 +96,42 @@ def check_wheel():
 
     except Exception:
         error('! wheel is not installed.')
-        print('  To install: ' + SUDO + 'pip3 install wheel')
+        print('  To install, run: ' + SUDO + 'pip3 install wheel')
         sys.exit(1)
 
     version_str = version_str.split()[1]
     version = tuple(map(_int_or, version_str.split('.')))
     if version < (0, 31):
-        error('! Version is', version_str, 'but should be 0.31+')
-        print('  To upgrade: ' + SUDO + 'pip3 install -U wheel')
+        error('! Version is', version_str + ', but should be 0.31+')
+        print('  To upgrade, run: ' + SUDO + 'pip3 install -U wheel')
+        sys.exit(1)
+
+
+def check_devel():
+    print('\nChecking dev...')
+
+    include_path = run('python' + PY_VERSION +
+                       ' -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())"',
+                       return_output=True)
+    if not include_path:
+        error('! Failed to get Python include path, so not sure if Python dev package is installed')
+        print('  To install in Debian/Ubuntu, run: ' + SUDO + ' apt install python' + PY_VERSION + '-dev')
+        sys.exit(1)
+
+    python_h = os.path.join(include_path.strip(), 'Python.h')
+
+    if not os.path.exists(python_h):
+        error('! Python dev package is not installed as', python_h, 'does not exist')
+        print('  To install in Debian/Ubuntu, run: ' + SUDO + 'apt install python' + PY_VERSION + '-dev')
         sys.exit(1)
 
 
 def run(cmd, return_output=False, raises=False, **kwargs):
     print('+ ' + str(cmd))
-    if isinstance(cmd, str):
+
+    if '"' in cmd:
+        kwargs['shell'] = True
+    elif isinstance(cmd, str):
         cmd = cmd.split()
 
     check_call = subprocess.check_output if return_output else subprocess.check_call
@@ -158,5 +180,6 @@ check_pip()
 check_venv()
 check_setuptools()
 check_wheel()
+check_devel()
 
 echo('\nPython is alive and well. Good job!', color='green')
