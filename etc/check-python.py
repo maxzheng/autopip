@@ -6,30 +6,17 @@ import subprocess
 import sys
 
 
-is_linux = platform.system() == 'Linux'
+IS_LINUX = platform.system() == 'Linux'
+PY_VERSION = '3.6'
 
 
 def check_python():
     print('Checking Python...')
-    py3_path = run('which python3', return_output=True)
+    py3_path = run('which python' + PY_VERSION, return_output=True)
     if not py3_path:
-        error('! Python 3 does not seem to be installed')
-        print('  Please install Python 3.6 per http://docs.python-guide.org/en/latest/starting/installation/')
-        sys.exit(1)
-
-    version = run('python3 --version', return_output=True)
-    version = version.split()[1]
-    major, minor, _ = map(_int_or, version.split('.', 2))
-    if minor < 6:
-        error('! Version is', version, 'but should be 3.6+')
-
-        py36_path = run('which python3.6', return_output=True)
-        if py36_path:
-            print('  Python 3.6 is installed, so try updating the symlink: sudo ln -sfn ' + py36_path.strip() +
-                  ' ' + py3_path.strip())
-        else:
-            print('  Please install Python 3.6 per http://docs.python-guide.org/en/latest/starting/installation/')
-
+        error('! Python ' + PY_VERSION + ' is not installed.')
+        print('  Please install Python ' + PY_VERSION +
+              ' per http://docs.python-guide.org/en/latest/starting/installation/')
         sys.exit(1)
 
 
@@ -38,9 +25,10 @@ def check_pip():
 
     if not run('which pip3', return_output=True):
         error('! pip3 does not seem to be installed.')
-        print('  Try installing it with: curl https://bootstrap.pypa.io/get-pip.py | sudo python3.6')
-        if is_linux:
-            print('  If your package repo (e.g. apt) has a *-pip package for Python 3.6, then install it from there.')
+        print('  Try installing it with: curl https://bootstrap.pypa.io/get-pip.py | sudo python' + PY_VERSION)
+        if IS_LINUX:
+            print('  If your package repo (e.g. apt) has a *-pip package for Python ' + PY_VERSION +
+                  ', then install it from there.')
             print('  E.g. For Debian/Ubuntu, try: apt install python3-pip')
         sys.exit(1)
 
@@ -52,10 +40,10 @@ def check_pip():
         print('  Try upgrading it: pip3 install -U pip3==9.0.3')
         sys.exit(1)
 
-    if 'python3.6' not in version_full:
-        error('! pip3 seems to be for another Python version and not Python 3.6')
+    if 'python' + PY_VERSION not in version_full:
+        error('! pip3 seems to be for another Python version and not Python ' + PY_VERSION)
         print('  See output: ' + version_full.strip())
-        print('  Try re-installing it with: curl https://bootstrap.pypa.io/get-pip.py | sudo python3.6')
+        print('  Try re-installing it with: curl https://bootstrap.pypa.io/get-pip.py | sudo python' + PY_VERSION)
         sys.exit(1)
 
 
@@ -68,8 +56,8 @@ def check_venv():
             run('python3 -m venv ' + test_venv_path, stderr=subprocess.STDOUT, return_output=True)
         except Exception:
             error('! Could not create virtual environment. Please make sure *-venv package is installed.')
-            if is_linux:
-                print('  For Debian/Ubuntu, try: sudo apt install python3.6-venv')
+            if IS_LINUX:
+                print('  For Debian/Ubuntu, try: sudo apt install python' + PY_VERSION + '-venv')
             sys.exit(1)
 
     finally:
