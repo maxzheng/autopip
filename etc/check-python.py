@@ -29,7 +29,7 @@ def check_pip():
         if IS_LINUX:
             print('  If your package repo (e.g. apt) has a *-pip package for Python ' + PY_VERSION +
                   ', then install it from there.')
-            print('  E.g. For Debian/Ubuntu, try: apt install python3-pip')
+            print('  E.g. For Debian/Ubuntu, try: sudo apt install python3-pip')
         sys.exit(1)
 
     version_full = run('pip3 --version', return_output=True)
@@ -41,8 +41,8 @@ def check_pip():
         sys.exit(1)
 
     if 'python' + PY_VERSION not in version_full:
-        error('! pip3 seems to be for another Python version and not Python ' + PY_VERSION)
-        print('  See output: ' + version_full.strip())
+        print('  ' + version_full.strip())
+        error('! pip3 is pointing to another Python version and not Python ' + PY_VERSION)
         print('  Try re-installing it with: curl https://bootstrap.pypa.io/get-pip.py | sudo python' + PY_VERSION)
         sys.exit(1)
 
