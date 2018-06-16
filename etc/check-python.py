@@ -44,7 +44,7 @@ def check_python():
             raise AutoFixSuggestion('To install, run',
                                     (SUDO + 'apt-get update',
                                      SUDO + 'apt-get install -y software-properties-common',
-                                     SUDO + 'add-apt-repository ppa:deadsnakes/ppa',
+                                     SUDO + 'add-apt-repository -y ppa:deadsnakes/ppa',
                                      SUDO + 'apt-get update',
                                      SUDO + 'apt-get install -y python' + PY_VERSION))
 
