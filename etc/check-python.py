@@ -103,7 +103,7 @@ def check_venv():
             error('! Could not create virtual environment.')
             if IS_DEBIAN:
                 raise AutoFixSuggestion('To install, run', SUDO + 'apt-get install -y python' + PY_VERSION + '-venv')
-            print(' Please make sure Python venv package is installed.')
+            print('  Please make sure Python venv package is installed.')
             sys.exit(1)
 
     finally:
@@ -173,7 +173,7 @@ def run(cmd, return_output=False, raises=False, **kwargs):
         output = check_call(cmd, **kwargs)
 
         if isinstance(output, bytes):
-            output = output.decode()
+            output = output.decode('utf-8')
 
         return output
 
