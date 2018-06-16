@@ -27,7 +27,7 @@ def check_pip():
 
     if not run('which pip3', return_output=True):
         error('! pip3 does not seem to be installed.')
-        print('  Try installing it with: curl https://bootstrap.pypa.io/get-pip.py | ' + SUDO + 'python' + PY_VERSION)
+        print('  Install it with: curl https://bootstrap.pypa.io/get-pip.py | ' + SUDO + 'python' + PY_VERSION)
         if IS_LINUX:
             print('  If your package repo (e.g. apt) has a *-pip package for Python ' + PY_VERSION +
                   ', then install it from there.')
@@ -39,13 +39,13 @@ def check_pip():
     version = tuple(map(_int_or, version_str.split('.', 2)))
     if version < (9, 0, 3):
         error('! Version is', version_str, 'but should be 9.0.3+')
-        print('  Try upgrading it: ' + SUDO + 'pip3 install -U pip==9.0.3')
+        print('  To upgrade: ' + SUDO + 'pip3 install -U pip==9.0.3')
         sys.exit(1)
 
     if 'python' + PY_VERSION not in version_full:
         print('  ' + version_full.strip())
         error('! pip3 is pointing to another Python version and not Python ' + PY_VERSION)
-        print('  Try re-installing it with: curl https://bootstrap.pypa.io/get-pip.py | ' +
+        print('  Re-install it with: curl https://bootstrap.pypa.io/get-pip.py | ' +
               SUDO + 'python' + PY_VERSION)
         sys.exit(1)
 
@@ -67,6 +67,44 @@ def check_venv():
 
     finally:
         shutil.rmtree(test_venv_path, ignore_errors=True)
+
+
+def check_setuptools():
+    print('\nChecking setuptools...')
+
+    try:
+        version_str = run('python' + PY_VERSION + ' -m easy_install --version', return_output=True)
+
+    except Exception:
+        error('! setuptools is not installed.')
+        print('  To install: ' + SUDO + 'pip3 install setuptools')
+        sys.exit(1)
+
+    version_str = version_str.split()[1]
+    version = tuple(map(_int_or, version_str.split('.')))
+    if version < (39,):
+        error('! Version is', version_str, 'but should be 39+')
+        print('  To upgrade: ' + SUDO + 'pip3 install -U setuptools')
+        sys.exit(1)
+
+
+def check_wheel():
+    print('\nChecking wheel...')
+
+    try:
+        version_str = run('python' + PY_VERSION + ' -m wheel version ', return_output=True)
+
+    except Exception:
+        error('! wheel is not installed.')
+        print('  To install: ' + SUDO + 'pip3 install wheel')
+        sys.exit(1)
+
+    version_str = version_str.split()[1]
+    version = tuple(map(_int_or, version_str.split('.')))
+    if version < (0, 31):
+        error('! Version is', version_str, 'but should be 0.31+')
+        print('  To upgrade: ' + SUDO + 'pip3 install -U wheel')
+        sys.exit(1)
 
 
 def run(cmd, return_output=False, raises=False, **kwargs):
@@ -118,5 +156,7 @@ def echo(msg, color=None):
 check_python()
 check_pip()
 check_venv()
+check_setuptools()
+check_wheel()
 
 echo('\nPython is alive and well. Good job!', color='green')
