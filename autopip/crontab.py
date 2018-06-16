@@ -17,7 +17,7 @@ def _ensure_cron():
         run('ps -ef | grep /usr/sbin/cron | grep -v grep', stderr=STDOUT, shell=True)
 
     except Exception:
-        raise RuntimeError('cron service does not seem to be running. Try starting it: sudo service cron start')
+        raise MissingError('cron service does not seem to be running. Try starting it: sudo service cron start')
 
 
 def add(cmd, schedule='? * * * *', cmd_id=None):
