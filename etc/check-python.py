@@ -35,18 +35,19 @@ def check_pip():
         sys.exit(1)
 
     version_full = run('pip3 --version', return_output=True)
-    version_str = version_full.split()[1]
-    version = tuple(map(_int_or, version_str.split('.', 2)))
-    if version < (9, 0, 3):
-        error('! Version is', version_str + ', but should be 9.0.3+')
-        print('  To upgrade, run: ' + SUDO + 'pip3 install -U pip==9.0.3')
-        sys.exit(1)
 
     if 'python' + PY_VERSION not in version_full:
         print('  ' + version_full.strip())
         error('! pip3 is pointing to another Python version and not Python ' + PY_VERSION)
         print('  Re-install it with: curl https://bootstrap.pypa.io/get-pip.py | ' +
               SUDO + 'python' + PY_VERSION)
+        sys.exit(1)
+
+    version_str = version_full.split()[1]
+    version = tuple(map(_int_or, version_str.split('.', 2)))
+    if version < (9, 0, 3):
+        error('! Version is', version_str + ', but should be 9.0.3+')
+        print('  To upgrade, run: ' + SUDO + 'pip3 install pip==9.0.3')
         sys.exit(1)
 
 
