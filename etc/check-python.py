@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import platform
 import shutil
 import subprocess
@@ -8,6 +9,7 @@ import sys
 
 IS_LINUX = platform.system() == 'Linux'
 PY_VERSION = '3.6'
+SUDO = 'sudo ' if os.getuid() else ''
 
 
 def check_python():
@@ -25,11 +27,11 @@ def check_pip():
 
     if not run('which pip3', return_output=True):
         error('! pip3 does not seem to be installed.')
-        print('  Try installing it with: curl https://bootstrap.pypa.io/get-pip.py | sudo python' + PY_VERSION)
+        print('  Try installing it with: curl https://bootstrap.pypa.io/get-pip.py | ' + SUDO + 'python' + PY_VERSION)
         if IS_LINUX:
             print('  If your package repo (e.g. apt) has a *-pip package for Python ' + PY_VERSION +
                   ', then install it from there.')
-            print('  E.g. For Debian/Ubuntu, try: sudo apt install python3-pip')
+            print('  E.g. For Debian/Ubuntu, try: ' + SUDO + 'apt install python3-pip')
         sys.exit(1)
 
     version_full = run('pip3 --version', return_output=True)
@@ -37,13 +39,14 @@ def check_pip():
     version = tuple(map(_int_or, version_str.split('.', 2)))
     if version < (9, 0, 3):
         error('! Version is', version_str, 'but should be 9.0.3+')
-        print('  Try upgrading it: sudo pip3 install -U pip==9.0.3')
+        print('  Try upgrading it: ' + SUDO + 'pip3 install -U pip==9.0.3')
         sys.exit(1)
 
     if 'python' + PY_VERSION not in version_full:
         print('  ' + version_full.strip())
         error('! pip3 is pointing to another Python version and not Python ' + PY_VERSION)
-        print('  Try re-installing it with: curl https://bootstrap.pypa.io/get-pip.py | sudo python' + PY_VERSION)
+        print('  Try re-installing it with: curl https://bootstrap.pypa.io/get-pip.py | ' +
+              SUDO + 'python' + PY_VERSION)
         sys.exit(1)
 
 
@@ -59,7 +62,7 @@ def check_venv():
         except Exception:
             error('! Could not create virtual environment. Please make sure *-venv package is installed.')
             if IS_LINUX:
-                print('  For Debian/Ubuntu, try: sudo apt install python' + PY_VERSION + '-venv')
+                print('  For Debian/Ubuntu, try: ' + SUDO + 'apt install python' + PY_VERSION + '-venv')
             sys.exit(1)
 
     finally:
