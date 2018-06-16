@@ -260,4 +260,7 @@ except Exception as e:
         error('!', str(e))
     sys.exit(1)
 
+except KeyboardInterrupt:
+    sys.exit(1)
+
 echo('Python is alive and well. Good job!', color='green')
