@@ -24,7 +24,7 @@ No need to worry about tainting system Python install as `autopip` has no instal
 Alternatively, you can install it in a virtual environment -- the last one that you will ever create manually for
 installing Python apps::
 
-    python3 -m venv ~/.virtualenvs/autopip
+    python3.6 -m venv ~/.virtualenvs/autopip
     source ~/.virtualenvs/autopip/bin/activate
     pip3 install autopip
 

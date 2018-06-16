@@ -37,7 +37,7 @@ def check_pip():
     version = tuple(map(_int_or, version_str.split('.', 2)))
     if version < (9, 0, 3):
         error('! Version is', version_str, 'but should be 9.0.3+')
-        print('  Try upgrading it: pip3 install -U pip3==9.0.3')
+        print('  Try upgrading it: sudo pip3 install -U pip==9.0.3')
         sys.exit(1)
 
     if 'python' + PY_VERSION not in version_full:
@@ -53,7 +53,7 @@ def check_venv():
 
     try:
         try:
-            run('python3 -m venv ' + test_venv_path, stderr=subprocess.STDOUT, return_output=True)
+            run('python' + PY_VERSION + ' -m venv ' + test_venv_path, stderr=subprocess.STDOUT, return_output=True)
         except Exception:
             error('! Could not create virtual environment. Please make sure *-venv package is installed.')
             if IS_LINUX:
