@@ -256,8 +256,7 @@ try:
         print('')
 
 except Exception as e:
-    if not isinstance(e, AutoFixSuggestion):
-        error('!', str(e))
+    error('!', str(e))
     sys.exit(1)
 
 except KeyboardInterrupt:
