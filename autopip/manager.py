@@ -372,7 +372,7 @@ class App:
                 python_version = self.settings().get('python_version')
 
             if not update:
-                update = self.settings().get('update')
+                update = self.settings().get('update') and UpdateFreq.from_name(self.settings()['update'])
 
         if not python_version:
             python_version = PYTHON_VERSION
