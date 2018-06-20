@@ -1,5 +1,10 @@
-Version 1.3.1
+Version 1.3.2
 ================================================================================
+
+* Convert update value to correct type
+
+Version 1.3.1
+--------------------------------------------------------------------------------
 
 * Only display --python hint for normal exceptions
 
