@@ -23,7 +23,7 @@ def get_scripts(dist):
     if console_scripts:
         return list(console_scripts.keys())
 
-    scripts = list()
+    scripts = set()
 
     for record_file in ['RECORD', 'installed-files.txt', 'SOURCES.txt']:
         try:
@@ -33,15 +33,15 @@ def get_scripts(dist):
             continue
 
         if records:
-            bin_re = re.compile('../bin/([^,]+),?')
+            bin_re = re.compile('\.\./bin/([^,]+),?')
 
             for line in records.split('\n'):
                 match = bin_re.search(line)
 
                 if match:
-                    scripts.append(match.group(1))
+                    scripts.add(match.group(1))
 
-    return scripts
+    return list(scripts)
 
 
 def get_group_specs(dist):
