@@ -1,5 +1,10 @@
-Version 1.3.0
+Version 1.3.1
 ================================================================================
+
+* Only display --python hint for normal exceptions
+
+Version 1.3.0
+--------------------------------------------------------------------------------
 
 * Support installing for different versions of Python using --python option
 * Remove condition that can never be true
