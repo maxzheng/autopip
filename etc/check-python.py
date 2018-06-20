@@ -92,7 +92,7 @@ def check_pip():
 
 
 def check_venv():
-    test_venv_path = '/tmp/check-python-venv'
+    test_venv_path = '/tmp/check-python-venv-{}'.format(os.getpid())
 
     try:
         try:
@@ -105,6 +105,25 @@ def check_venv():
                 raise AutoFixSuggestion('To install, run', SUDO + 'apt-get install -y python' + PY_VERSION + '-venv')
             print('  Please make sure Python venv package is installed.')
             sys.exit(1)
+
+    finally:
+        shutil.rmtree(test_venv_path, ignore_errors=True)
+
+    try:
+        try:
+            run('virtualenv --python python' + PY_VERSION + ' ' + test_venv_path, stderr=subprocess.STDOUT,
+                return_output=True,
+                raises=True)
+
+        except Exception as e:
+            if shutil.which('virtualenv'):
+                error('! Could not create virtual environment.')
+                print('  ' + str(e))
+                sys.exit(1)
+
+            else:
+                error('! virtualenv is not installed.')
+                raise AutoFixSuggestion('To install, run', SUDO + 'pip3 install virtualenv')
 
     finally:
         shutil.rmtree(test_venv_path, ignore_errors=True)

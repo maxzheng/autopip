@@ -1,6 +1,6 @@
 from enum import IntEnum
 
-
+PYTHON_VERSION = '3.6'
 WAIT_TIMEOUT_MSG = 'No new version was published after an hour, so not gonna wait anymore.'
 INSTALL_TIMEOUT_MSG = """Uh oh, something is wrong...
   autopip has been running for an hour and is likely stuck, so exiting to prevent resource issues.

@@ -9,8 +9,6 @@ atomically creates symlinks for installed scripts in `/usr/local/bin` so you can
 installed cleanly into its own virtual environment. Optionally, it can setup crontab entries to install apps on a
 schedule to keep them updated automatically.
 
-FYI Currently supports Python 3.6 apps only
-
 Before starting, check your Python installation::
 
     curl -s https://raw.githubusercontent.com/maxzheng/autopip/master/etc/check-python.py | python
@@ -62,6 +60,15 @@ option (e.g. hourly, daily, weekly, monthly).
     Updating script symlinks in /usr/local/bin
     + ah
 
+To install an app for older or specific Python version, use the ``--python`` option:
+
+.. code-block:: console
+
+    $ app install ducktape --python 2
+    Installing ducktape to /usr/local/opt/apps/ducktape/0.7.3
+    Updating script symlinks in /usr/local/bin
+    + ducktape
+
 To show currently installed apps and their scripts:
 
 .. code-block:: console
@@ -69,6 +76,8 @@ To show currently installed apps and their scripts:
     $ app list --scripts
     ansible-hostmanager  0.2.3   /usr/local/opt/apps/ansible-hostmanager/0.2.3
                                  /usr/local/bin/ah
+    ducktape             0.7.3   /usr/local/opt/apps/ducktape/0.7.3
+                                 /usr/local/bin/ducktape
     workspace-tools      3.2.2   /usr/local/opt/apps/workspace-tools/3.2.2      [updates hourly]
                                  /usr/local/bin/wst
 
@@ -78,11 +87,12 @@ To manually update all apps:
 
     $ app update
     ansible-hostmanager is up-to-date
+    ducktape is up-to-date
     workspace-tools is up-to-date
 
 To uninstall::
 
-    app uninstall ansible-hostmanager
+    app uninstall ducktape
 
 And you can even keep `autopip` updated automatically by installing itself:
 

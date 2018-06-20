@@ -43,6 +43,7 @@ Scripts are in /tmp/system/bin: bump
     assert mock_run.call_count == 6
 
     assert autopip('update') == 'bumper is up-to-date\n'
+    assert autopip('update blah') == 'No apps found matching: blah\nAvailable apps: bumper\n'
 
     # Wait for new version
     mock_sleep = Mock(side_effect=[0, 0, 0, Exception('No new version')])
@@ -72,6 +73,10 @@ Scripts are in /tmp/system/bin: bump
     ]
 
     assert autopip('list') == 'No apps are installed yet.\n'
+
+
+def test_update(autopip):
+    assert autopip('update') == 'No apps installed yet.\n'
 
 
 def test_install_lib(autopip):

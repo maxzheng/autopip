@@ -3,7 +3,7 @@ import logging
 import signal
 import sys
 
-from autopip.constants import UpdateFreq, INSTALL_TIMEOUT_MSG, WAIT_TIMEOUT_MSG
+from autopip.constants import UpdateFreq, INSTALL_TIMEOUT_MSG, WAIT_TIMEOUT_MSG, PYTHON_VERSION
 from autopip.manager import AppsManager
 
 
@@ -18,7 +18,9 @@ def main():
 
     try:
         if args.command == 'install':
-            mgr.install(args.apps, update=UpdateFreq.from_name(args.update) if args.update else None)
+            mgr.install(args.apps,
+                        update=UpdateFreq.from_name(args.update) if args.update else None,
+                        python_version=args.python)
 
         elif args.command == 'list':
             mgr.list(name_filter=args.name_filter, scripts=args.scripts)
@@ -32,7 +34,10 @@ def main():
         else:
             raise NotImplementedError('Command {} not implemented yet'.format(args.command))
 
-    except BaseException as e:
+    except KeyboardInterrupt:
+        sys.exit(1)
+
+    except Exception as e:
         if str(e):
             logging.error(f'! {e}', exc_info=args.debug)
         sys.exit(1)
@@ -54,6 +59,8 @@ def cli_args():
                                 default=default_update,
                                 help='How often to update the app. {}'.format(
                                     '[default: %(default)s]' if default_update else ''))
+    install_parser.add_argument('--python', metavar='VERSION', default=PYTHON_VERSION,
+                                help='Python version to run the app. [default: %(default)s]')
     install_parser.set_defaults(command='install')
 
     list_parser = subparsers.add_parser('list', help='List installed apps')

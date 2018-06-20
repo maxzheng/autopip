@@ -2,21 +2,21 @@ from configparser import RawConfigParser
 from collections import defaultdict
 from functools import lru_cache
 import json
-import imp
 from logging import info, error, debug
 import os
 from pathlib import Path, PurePath
 import pkg_resources
 import re
 import shutil
-from subprocess import check_output as run, CalledProcessError, STDOUT
+from subprocess import CalledProcessError, STDOUT
 import sys
 from time import time, sleep
 import urllib.request
 import urllib.error
 
-from autopip.constants import UpdateFreq
 from autopip import crontab, exceptions
+from autopip.constants import UpdateFreq, PYTHON_VERSION
+from autopip.utils import run
 
 
 class AppsManager:
@@ -35,12 +35,13 @@ class AppsManager:
         # PyPI auth. Tuple of user and password.
         self._index_auth = None
 
-    def install(self, apps, update=None, wait=False):
+    def install(self, apps, update=None, python_version=None, wait=False):
         """
         Install the given apps
 
         :param list[str] apps: List of apps to install
         :param UpdateFreq|None update: How often to update
+        :param str python_version: Python version to run the app
         :param bool wait: Wait for a new version to be published and then install it.
         """
         self._set_index()
@@ -57,13 +58,13 @@ class AppsManager:
 
         for name in apps:
             try:
-                if isinstance(name, tuple):  # From app.group_specs() or self.update()
+                if isinstance(name, tuple):  # From app.group_specs()
                     name, update = name
                     if update:
                         update = UpdateFreq.from_name(update)
 
                 app_spec = next(iter(pkg_resources.parse_requirements(name)))
-                app, updated = self._install_app(app_spec, update=update, wait=wait)
+                app, updated = self._install_app(app_spec, update=update, python_version=python_version, wait=wait)
 
                 if updated:
                     printed_wait = False
@@ -88,7 +89,7 @@ class AppsManager:
         if failed_apps:
             raise exceptions.FailedAction()
 
-    def _install_app(self, app_spec, update=None, wait=False):
+    def _install_app(self, app_spec, update=None, python_version=None, wait=False):
         """ Install the given app """
         app = App(app_spec.name, self.paths, debug=self.debug)
         updated = False
@@ -102,7 +103,7 @@ class AppsManager:
             version = self._app_version(app_spec)
 
             if not wait or version != app.current_version:
-                updated = app.install(version, app_spec, update=update)
+                updated = app.install(version, app_spec, update=update, python_version=python_version)
 
         else:
             debug('App does not need to be updated yet.')
@@ -290,9 +291,9 @@ class AppsManager:
             for app in app_instances:
                 settings = app.settings()
                 if settings.get('update'):
-                    app_specs.append((settings['app_spec'], settings['update']))
+                    app_specs.append(settings['app_spec'])
                 elif sys.stdout.isatty():
-                    app_specs.append((settings.get('app_spec', app.name), None))
+                    app_specs.append(settings.get('app_spec', app.name))
 
             if app_specs:
                 self.install(app_specs, wait=wait)
@@ -352,18 +353,29 @@ class App:
         if self.current_path:
             return self.current_path.resolve().name
 
-    def install(self, version, app_spec, update=None):
+    def install(self, version, app_spec, update=None, python_version=None):
         """
         Install the version of the app if it is not already installed
 
         :param str version: Version of the app to install
         :param pkg_resources.Requirement app_spec: App version requirement from user
         :param UpdateFreq|None update: How often to update. Choose from hourly, daily, weekly, monthly
+        :param str python_version: Python version to run app
         :return: True if install or update happened, otherwise False when nothing happened (already installed / non-tty)
         """
         version_path = self.path / version
         prev_version_path = self.current_path and self.current_path.resolve()
         important_paths = [version_path, prev_version_path, self._current_symlink]
+
+        if self.settings():
+            if not python_version:
+                python_version = self.settings().get('python_version')
+
+            if not update:
+                update = self.settings().get('update')
+
+        if not python_version:
+            python_version = PYTHON_VERSION
 
         if version_path.exists():
             if self.current_version == version:
@@ -380,6 +392,16 @@ class App:
                 info(f'{self.name} {version} was previously installed and will be set as the current version')
 
         else:
+            if not shutil.which('python' + python_version):
+                error(f'! python{python_version} does not exist. '
+                      'Please install it first, or ensure its path is in PATH.')
+                sys.exit(1)
+
+            if python_version.startswith('2'):
+                venv = f'virtualenv --python=python{python_version}'
+            else:
+                venv = f'python{python_version} -m venv'
+
             old_venv_dir = None
             old_path = None
 
@@ -392,7 +414,7 @@ class App:
                                                           if os.path.exists(p) and not p.startswith(old_venv_dir)])
 
                 run(f"""set -e
-                    python3.6 -m venv {version_path}
+                    {venv} {version_path}
                     source {version_path / 'bin/activate'}
                     pip install --upgrade pip wheel
                     pip install {self.name}=={version}
@@ -402,7 +424,18 @@ class App:
                 shutil.rmtree(version_path, ignore_errors=True)
 
                 if isinstance(e, CalledProcessError) and e.output:
-                    info(re.sub(r'(https?://)[^/]+:[^/]+@', r'\1<xxx>:<xxx>@', e.output.decode('utf-8')))
+                    output = e.output.decode('utf-8')
+
+                    if not python_version.startswith('2'):
+                        if 'is a builtin module since Python 3' in output:
+                            info(f'Failed to install using Python {python_version} venv, '
+                                 'let\'s try using Python 2 virtualenv.')
+                            return self.install(version, app_spec, update=update, python_version='2')
+
+                    info(re.sub(r'(https?://)[^/]+:[^/]+@', r'\1<xxx>:<xxx>@', output))
+
+                error(f'! Failed to install using Python {python_version}.'
+                      ' If this app requires a different Python version, please specify it using --python option.')
 
                 raise
 
@@ -431,7 +464,7 @@ class App:
                 '  If you are the app owner, make sure to setup entry_points in setup.py.\n'
                 '  See http://setuptools.readthedocs.io/en/latest/setuptools.html#automatic-script-creation')
 
-        self.settings(app_spec=str(app_spec))
+        self.settings(app_spec=str(app_spec), python_version=python_version)
 
         # Install cronjobs
         if 'update' not in sys.argv:
@@ -543,95 +576,50 @@ class App:
 
     def scripts(self, path=None):
         """ Set of scripts for the given app path (defaults to current). """
-        dist = self._pkg_distribution(path=path)
-
-        if dist:
-            console_scripts = dist.get_entry_map('console_scripts')
-
-            if console_scripts:
-                return set(console_scripts.keys())
-
-            try:
-                records = dist.get_metadata('RECORD')
-            except Exception:
-                records = dist.get_metadata('installed-files.txt')
-
-            if records:
-                scripts = set()
-                bin_re = re.compile('../bin/([^,]+),?')
-
-                for line in records.split('\n'):
-                    match = bin_re.search(line)
-
-                    if match:
-                        scripts.add(match.group(1))
-
-                return scripts
-
-        return set()
+        dist = self._pkg_info(path=path)
+        return dist and set(dist['scripts']) or set()
 
     def group_specs(self, path=None, name_only=False):
         """ List of app specs from this app's "autopip" entry points for the given app path (defaults to current)"""
         app_specs = []
-        dist = self._pkg_distribution(path=path)
+        dist = self._pkg_info(path=path)
 
         if dist:
-            for app, spec in dist.get_entry_map('autopip').items():
+            for app, version, update in dist.get('group_specs', []):
                 if name_only:
                     app_specs.append(app)
 
-                elif spec.module_name == 'latest':
-                    app_specs.append((app, UpdateFreq.DEFAULT.name.lower()))
+                elif version == 'latest':
+                    app_specs.append((app, update or UpdateFreq.DEFAULT.name.lower()))
 
-                else:
-                    if len(spec.module_name.split('.')) < 3 or spec.extras:     # Wildcard with auto-update
-                        app_specs.append((f'{app}=={spec.module_name}.*',
-                                         next(iter(spec.extras), UpdateFreq.DEFAULT.name.lower())))
-                    else:
-                        app_specs.append((f'{app}=={spec.module_name}', None))  # Specific version without auto-update
+                elif len(version.split('.')) < 3:
+                        app_specs.append((f'{app}=={version}.*', update or UpdateFreq.DEFAULT.name.lower()))
+
+                else:  # Specific version without auto-update
+                    app_specs.append((f'{app}=={version}', None))
 
         return app_specs
 
     @lru_cache()
-    def _pkg_distribution(self, path=None):
-        """ Get pkg_resources.Distribution() for the given path (defaults to current path) """
+    def _pkg_info(self, path=None):
+        """ Get scripts and entry points from the app """
         if not path:
             if not self.current_path:
                 return
 
             path = self.current_path
 
+        inspect_py = Path(__file__).parent / 'inspect_app.py'
+
         try:
-            return pkg_resources.get_distribution(self.name)
+            info = run(f"""set -e
+                source {path / 'bin/activate'}
+                python {inspect_py} {self.name}
+                """, executable='/bin/bash', stderr=STDOUT, shell=True)
+            return json.loads(info)
 
-        except pkg_resources.DistributionNotFound:
-            activated = False
-
-            try:
-                activate_this_file = path / 'bin' / 'activate_this.py'
-
-                if not activate_this_file.exists():
-                    shutil.copyfile(Path(__file__).parent / 'embedded' / 'activate_this.py', activate_this_file)
-
-                old_os_path = os.environ.get('PATH', '')
-                old_sys_path = list(sys.path)
-                old_prefix = sys.prefix
-
-                exec(open(activate_this_file).read(), dict(__file__=activate_this_file))
-                activated = True
-
-                imp.reload(pkg_resources)
-                return pkg_resources.get_distribution(self.name)
-
-            except Exception as e:
-                error('! Can not get package distribution info because: %s', e)
-
-            finally:
-                if activated:
-                    os.environ['PATH'] = old_os_path
-                    sys.path = old_sys_path
-                    sys.prefix = old_prefix
-                    imp.reload(pkg_resources)
+        except Exception as e:
+            error('! Can not get package distribution info because: %s', e)
 
     def uninstall(self):
         """ Uninstall app """
