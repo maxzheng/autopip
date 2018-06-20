@@ -428,10 +428,13 @@ class App:
                         output = e.output.decode('utf-8')
 
                         if not python_version.startswith('2'):
-                            if 'is a builtin module since Python 3' in output:
-                                info(f'Failed to install using Python {python_version} venv, '
-                                     'let\'s try using Python 2 virtualenv.')
-                                return self.install(version, app_spec, update=update, python_version='2')
+                            python2 = shutil.which('python2') or shutil.which('python2.7')
+                            if python2:
+                                py2_version = Path(python2).name.lstrip('python')
+                                if 'is a builtin module since Python 3' in output:
+                                    info(f'Failed to install using Python {python_version} venv, '
+                                         f'let\'s try using Python {py2_version} virtualenv.')
+                                    return self.install(version, app_spec, update=update, python_version=py2_version)
 
                         info(re.sub(r'(https?://)[^/]+:[^/]+@', r'\1<xxx>:<xxx>@', output))
 
