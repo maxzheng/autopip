@@ -1,3 +1,14 @@
+Version 1.3.0
+================================================================================
+
+* Support installing for different versions of Python using --python option
+* Remove condition that can never be true
+* Hide stacktrace for KeyboardInterrupt
+* Yes to add apt repo
+* Decode using utf8
+* Use tuple for printing autofix cmds
+* Add --autofix option to fix Python installation issues automatically
+
 Version 1.2.9
 ================================================================================
 
