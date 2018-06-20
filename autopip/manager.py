@@ -423,19 +423,20 @@ class App:
             except BaseException as e:
                 shutil.rmtree(version_path, ignore_errors=True)
 
-                if isinstance(e, CalledProcessError) and e.output:
-                    output = e.output.decode('utf-8')
+                if isinstance(e, CalledProcessError):
+                    if e.output:
+                        output = e.output.decode('utf-8')
 
-                    if not python_version.startswith('2'):
-                        if 'is a builtin module since Python 3' in output:
-                            info(f'Failed to install using Python {python_version} venv, '
-                                 'let\'s try using Python 2 virtualenv.')
-                            return self.install(version, app_spec, update=update, python_version='2')
+                        if not python_version.startswith('2'):
+                            if 'is a builtin module since Python 3' in output:
+                                info(f'Failed to install using Python {python_version} venv, '
+                                     'let\'s try using Python 2 virtualenv.')
+                                return self.install(version, app_spec, update=update, python_version='2')
 
-                    info(re.sub(r'(https?://)[^/]+:[^/]+@', r'\1<xxx>:<xxx>@', output))
+                        info(re.sub(r'(https?://)[^/]+:[^/]+@', r'\1<xxx>:<xxx>@', output))
 
-                error(f'! Failed to install using Python {python_version}.'
-                      ' If this app requires a different Python version, please specify it using --python option.')
+                    error(f'! Failed to install using Python {python_version}.'
+                          ' If this app requires a different Python version, please specify it using --python option.')
 
                 raise
 
