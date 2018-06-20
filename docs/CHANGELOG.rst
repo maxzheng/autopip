@@ -1,5 +1,10 @@
-Version 1.3.2
+Version 1.3.3
 ================================================================================
+
+* Unique scripts are unique and fix regex
+
+Version 1.3.2
+--------------------------------------------------------------------------------
 
 * Convert update value to correct type
 
