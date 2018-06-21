@@ -1,5 +1,11 @@
-Version 1.3.4
+Version 1.3.5
 ================================================================================
+
+* Suggest different command to start cron for macOS
+* Use a specific Python version
+
+Version 1.3.4
+--------------------------------------------------------------------------------
 
 * Detect python2 version before using
 
