@@ -1,3 +1,4 @@
+import platform
 from random import randint
 import re
 from subprocess import check_output as run, STDOUT
@@ -17,7 +18,11 @@ def _ensure_cron():
         run('ps -ef | grep /usr/sbin/cron | grep -v grep', stderr=STDOUT, shell=True)
 
     except Exception:
-        raise MissingError('cron service does not seem to be running. Try starting it: sudo service cron start')
+        if platform.system() == 'Darwin':
+            fix = 'launchctl load /System/Library/LaunchDaemons/com.vix.cron.plist'
+        else:
+            fix = 'service cron start'
+        raise MissingError(f'cron service does not seem to be running. Try starting it: sudo {fix}')
 
 
 def add(cmd, schedule='? * * * *', cmd_id=None):
