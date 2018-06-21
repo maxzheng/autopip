@@ -64,7 +64,7 @@ To install an app for older or specific Python version, use the ``--python`` opt
 
 .. code-block:: console
 
-    $ app install ducktape --python 2
+    $ app install ducktape --python 2.7
     Installing ducktape to /usr/local/opt/apps/ducktape/0.7.3
     Updating script symlinks in /usr/local/bin
     + ducktape
