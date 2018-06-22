@@ -151,6 +151,17 @@ def test_autopip_group(monkeypatch, autopip):
     assert f'system/developer-tools/{installed_version}' in autopip('list')
     assert autopip('list --scripts').split('\n')[1].strip().endswith('/bin/bump')
 
+    # Uninstall autopip
+    assert autopip('uninstall autopip') == ('! autopip can not be uninstalled until other apps are uninstalled: '
+                                            'bumper developer-tools\n')
+
+    # Update
+    assert autopip('update') == """\
+bumper is up-to-date [per spec: ==0.1.10]
+developer-tools is up-to-date
+This app has defined "autopip" entry points to install: bumper==0.1.10
+"""
+
     # Already installed
     mock_run.reset_mock()
     stdout = autopip(f'install developer-tools=={installed_version}')

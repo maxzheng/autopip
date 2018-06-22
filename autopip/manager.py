@@ -247,9 +247,6 @@ class AppsManager:
     def uninstall(self, apps):
         """ Uninstall apps """
         for name in apps:
-            if name == 'bin':  # Don't try to remove bin (contains symlinks to scripts) from the app dir
-                continue
-
             if name == 'autopip' and len(list(self.apps)) > 1:
                 if apps[-1] == 'autopip':
                     error('! autopip can not be uninstalled until other apps are uninstalled: %s', ' '.join(
@@ -293,7 +290,7 @@ class AppsManager:
                 if settings.get('update'):
                     app_specs.append((settings['app_spec'], settings['update']))
                 elif sys.stdout.isatty():
-                    app_specs.append((settings.get('app_spec', app.name, None)))
+                    app_specs.append((settings.get('app_spec', app.name), None))
 
             if app_specs:
                 self.install(app_specs, wait=wait)
