@@ -661,9 +661,9 @@ class AppsPath:
     LOCAL_LOG_ROOT = _LOCAL_BASE / 'var' / 'log' / 'autopip'
 
     # User install paths
-    USER_INSTALL_ROOT = Path('~/.apps').expanduser()
-    USER_SYMLINK_ROOT = USER_INSTALL_ROOT / 'bin'
-    USER_LOG_ROOT = USER_INSTALL_ROOT / 'log'
+    USER_INSTALL_ROOT = Path.home() / '.apps'
+    USER_SYMLINK_ROOT = Path.home() / 'bin'
+    USER_LOG_ROOT = USER_INSTALL_ROOT / '.log'
 
     def __init__(self):
         #: Root to install apps. This will be set at runtime based on permission by :meth:`_set_roots`
