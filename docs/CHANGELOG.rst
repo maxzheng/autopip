@@ -1,5 +1,10 @@
-Version 1.4.1
+Version 1.4.2
 ================================================================================
+
+* Fix another bug with update in interactive mode
+
+Version 1.4.1
+--------------------------------------------------------------------------------
 
 * Fix update not running in cron
 
