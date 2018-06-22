@@ -1,9 +1,11 @@
 import re
+from time import time
 
 from mock import MagicMock, Mock, call
 
 
-def test_autopip_common(monkeypatch, autopip, capsys):
+def test_autopip_common(monkeypatch, autopip, capsys, mock_paths):
+    system_root, _, _ = mock_paths
     mock_run = MagicMock()
     monkeypatch.setattr('autopip.crontab.run', mock_run)
     monkeypatch.setattr('autopip.crontab.randint', Mock(return_value=10))
@@ -42,8 +44,19 @@ Scripts are in /tmp/system/bin: bump
 """
     assert mock_run.call_count == 6
 
+    # Update manually
     assert autopip('update') == 'bumper is up-to-date\n'
     assert autopip('update blah') == 'No apps found matching: blah\nAvailable apps: bumper\n'
+
+    # Update via cron
+    assert autopip('update', isatty=False) == ''
+    bumper_root = system_root / 'bumper'
+    last_modified = bumper_root.stat().st_mtime
+    with monkeypatch.context() as m:
+        m.setattr('autopip.manager.time', Mock(return_value=time() + 3600))
+        assert autopip('update', isatty=False) == ''
+        current_modified = bumper_root.stat().st_mtime
+        assert current_modified > last_modified
 
     # Wait for new version
     mock_sleep = Mock(side_effect=[0, 0, 0, Exception('No new version')])

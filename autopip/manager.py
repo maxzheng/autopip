@@ -291,9 +291,9 @@ class AppsManager:
             for app in app_instances:
                 settings = app.settings()
                 if settings.get('update'):
-                    app_specs.append(settings['app_spec'])
+                    app_specs.append((settings['app_spec'], settings['update']))
                 elif sys.stdout.isatty():
-                    app_specs.append(settings.get('app_spec', app.name))
+                    app_specs.append((settings.get('app_spec', app.name, None)))
 
             if app_specs:
                 self.install(app_specs, wait=wait)

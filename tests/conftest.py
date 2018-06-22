@@ -47,7 +47,7 @@ def autopip(monkeypatch, caplog):
             args = args.split()
 
         monkeypatch.setattr('sys.argv', ['autopip', '--debug'] + args)
-        monkeypatch.setattr('sys.stdout.isatty', Mock(return_value=True))
+        monkeypatch.setattr('sys.stdout.isatty', Mock(return_value=isatty))
 
         caplog.clear()
 
