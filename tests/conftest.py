@@ -1,6 +1,7 @@
 import logging
 import os
 from pathlib import Path
+import re
 
 from mock import Mock
 import pytest
@@ -42,6 +43,8 @@ def mock_run(monkeypatch):
 
 @pytest.fixture()
 def autopip(monkeypatch, caplog):
+    tmp_re = re.compile('/tmp/.*/system/')
+
     def _run(args, isatty=True, raises=None):
         if isinstance(args, str):
             args = args.split()
@@ -54,10 +57,10 @@ def autopip(monkeypatch, caplog):
         if raises:
             with pytest.raises(raises) as e:
                 main()
-            return caplog.text, e
+            return tmp_re.sub('/tmp/system/', caplog.text), e
 
         else:
             main()
-            return caplog.text
+            return tmp_re.sub('/tmp/system/', caplog.text)
 
     return _run

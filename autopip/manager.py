@@ -334,6 +334,9 @@ class App:
         # Unique crontab name to to easily add and remove from crontab
         self._crontab_id = rf'autopip install "{self.name}[^a-z]*"'
 
+    def __repr__(self):
+        return f"App('{self.name}')"
+
     @property
     def is_installed(self):
         """ Is the app installed? """
@@ -492,7 +495,7 @@ class App:
 
                     # Migrate old crontabs
                     try:
-                        old_crons = [c for c in crontab.list().decode().split('\n') if c and 'autopip update' not in c]
+                        old_crons = [c for c in crontab.list().split('\n') if c and 'autopip update' not in c]
                         if old_crons:
                             cron_re = re.compile('autopip install "(.+)"')
                             for cron in old_crons:

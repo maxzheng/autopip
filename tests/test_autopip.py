@@ -1,8 +1,13 @@
+import os
 from pathlib import Path
 import re
+from subprocess import CalledProcessError
 from time import time
 
 from mock import MagicMock, Mock, call
+import pytest
+
+from autopip.utils import run
 
 
 def test_autopip_common(monkeypatch, autopip, capsys, mock_paths):
@@ -17,6 +22,8 @@ def test_autopip_common(monkeypatch, autopip, capsys, mock_paths):
     assert 'Updating script symlinks in' in stdout
     assert '+ bump' in stdout
     assert len(stdout.split('\n')) == 5
+
+    assert run([str(system_root / 'bin' / 'bump'), '-h']).startswith('usage: bump')
 
     assert len(mock_run.call_args_list) == 6
     assert mock_run.call_args_list[0:-1] == [
@@ -37,8 +44,7 @@ def test_autopip_common(monkeypatch, autopip, capsys, mock_paths):
 
     # Already installed
     mock_run.reset_mock()
-    stdout = autopip('install bumper')
-    assert re.sub('/tmp/.*/system', '/tmp/system', stdout) == """\
+    assert autopip('install bumper') == """\
 bumper is up-to-date
 Hourly auto-update enabled via cron service
 Scripts are in /tmp/system/bin: bump
@@ -110,6 +116,30 @@ def test_install_bad_version(autopip, monkeypatch):
     pip_conf_parser().read.assert_called_with(Path('/home/mzheng/.pip/pip.conf'))
 
 
+def test_install_no_path(autopip, monkeypatch):
+    monkeypatch.setenv('PATH', '')
+    stdout, _ = autopip('install bumper', raises=SystemExit)
+
+    assert stdout == '! python3.6 does not exist. Please install it first, or ensure its path is in PATH.\n'
+
+
+def test_install_python_2(autopip, mock_paths):
+    system_path, _, _ = mock_paths
+    assert autopip('install bumper --python 2.7') == """\
+Installing bumper to /tmp/system/bumper/0.1.13
+Hourly auto-update enabled via cron service
+Updating script symlinks in /tmp/system/bin
++ bump
+"""
+    version = run([str(system_path / 'bumper' / 'current' / 'bin' / 'python'), '--version'],
+                  stderr=-2)
+    assert version.startswith('Python 2.7')
+
+    assert run([str(system_path / 'bin' / 'bump'), '-h']).startswith('usage: bump')
+
+    assert autopip('uninstall bumper')
+
+
 def test_install_nonexisting(autopip):
     stdout, _ = autopip('install this-does-not-exist-blah-blah', raises=SystemExit)
     assert stdout.startswith('! No app version found in http')
@@ -122,10 +152,37 @@ def test_install_failed(autopip, monkeypatch, mock_run):
     assert '! install failed' in stdout
 
 
-def test_install_autopip(autopip):
-    stdout = autopip('install autopip==1.4.2')
-    print(stdout)
-    assert re.sub('/tmp/.*/system/', '/tmp/system/', stdout) == """\
+def test_install_python2_using_python3_mock(autopip, mock_run):
+    mock_run.side_effect = CalledProcessError(1, 'cmd',
+                                              output='some-pkg is a builtin module since Python 3'.encode())
+    stdout, _ = autopip('install pantsbuild.pants==1.6.0', raises=SystemExit)
+    assert stdout.startswith("""\
+Installing pantsbuild.pants to /tmp/system/pantsbuild.pants/1.6.0
+Failed to install using Python 3.6 venv, let's try using Python 2 virtualenv.
+Installing pantsbuild.pants to /tmp/system/pantsbuild.pants/1.6.0
+some-pkg is a builtin module since Python 3
+! Failed to install using Python 2. If this app requires a different Python version, \
+please specify it using --python option.
+! Command 'cmd' returned non-zero exit status 1.
+""")
+
+
+@pytest.mark.skipif(not os.environ.get('MORE'), reason='Too slow. Set MORE=1 to run')
+def test_install_python2_using_python3(autopip, ):
+    assert autopip('install pantsbuild.pants==1.6.0') == """\
+Installing pantsbuild.pants to /tmp/system/pantsbuild.pants/1.6.0
+Failed to install using Python 3.6 venv, let's try using Python 2 virtualenv.
+Installing pantsbuild.pants to /tmp/system/pantsbuild.pants/1.6.0
+Auto-update will be disabled since we are pinning to a specific version.
+To enable, re-run without pinning to specific version with --update option
+Updating script symlinks in /tmp/system/bin
++ pants
+"""
+    assert autopip('uninstall pantsbuild.pants') == 'Uninstalling pantsbuild.pants\n'
+
+
+def test_install_autopip(autopip, monkeypatch):
+    assert autopip('install autopip==1.4.2') == """\
 Installing autopip to /tmp/system/autopip/1.4.2
 Auto-update will be disabled since we are pinning to a specific version.
 To enable, re-run without pinning to specific version with --update option
@@ -133,8 +190,14 @@ Updating script symlinks in /tmp/system/bin
 + app
 + autopip
 """
+    with monkeypatch.context() as m:
+        remove_cron = Mock(side_effect=Exception('failed'))
+        m.setattr('autopip.manager.crontab.remove', remove_cron)
+        assert autopip('update', isatty=False) == ''
+        remove_cron.assert_called_with('autopip')
+
     stdout = autopip('list auto --scripts')
-    assert re.sub(' +autopip', ' ' * 32 + 'autopip', re.sub('/tmp/.*/system/', '/tmp/system/', stdout)) == """\
+    assert re.sub(' +autopip', ' ' * 32 + 'autopip', stdout) == """\
 autopip  1.4.2  /tmp/system/autopip/1.4.2  
                 /tmp/system/bin/app        
                                 autopip    
@@ -197,8 +260,7 @@ This app has defined "autopip" entry points to install: bumper==0.1.10
 
     # Already installed
     mock_run.reset_mock()
-    stdout = autopip(f'install developer-tools=={installed_version}')
-    assert re.sub('/tmp/.*/system', '/tmp/system', stdout) == """\
+    assert autopip(f'install developer-tools=={installed_version}') == """\
 developer-tools is up-to-date [per spec: ==1.0.7]
 Auto-update will be disabled since we are pinning to a specific version.
 To enable, re-run without pinning to specific version with --update option
