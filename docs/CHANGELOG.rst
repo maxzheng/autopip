@@ -1,5 +1,10 @@
-Version 1.4.2
+Version 1.4.3
 ================================================================================
+
+* Remove PYTHONPATH before installing
+
+Version 1.4.2
+--------------------------------------------------------------------------------
 
 * Fix another bug with update in interactive mode
 
