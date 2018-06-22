@@ -1,3 +1,4 @@
+from pathlib import Path
 import re
 from time import time
 
@@ -98,10 +99,20 @@ def test_install_lib(autopip):
     assert '! Odd, there are no scripts included in the app' in stdout
 
 
-def test_install_bad_version(autopip):
+def test_install_bad_version(autopip, monkeypatch):
+    pip_conf_parser = Mock(read=Mock(side_effect=Exception('Force use of PyPI index')))
+    monkeypatch.setattr('autopip.manager.RawConfigParser', pip_conf_parser)
+
     stdout, _ = autopip('install bumper==100.*', raises=SystemExit)
     assert '! No app version matching bumper==100.*' in stdout
     assert 'Available versions: 0.1.8, 0.1.9, 0.1.10, 0.1.11, 0.1.12' in stdout
+
+    pip_conf_parser().read.assert_called_with(Path('/home/mzheng/.pip/pip.conf'))
+
+
+def test_install_nonexisting(autopip):
+    stdout, _ = autopip('install this-does-not-exist-blah-blah', raises=SystemExit)
+    assert stdout.startswith('! No app version found in http')
 
 
 def test_install_failed(autopip, monkeypatch, mock_run):
@@ -109,6 +120,27 @@ def test_install_failed(autopip, monkeypatch, mock_run):
     monkeypatch.setattr('autopip.manager.run', mock_run)
     stdout, _ = autopip('install utils-core', raises=SystemExit)
     assert '! install failed' in stdout
+
+
+def test_install_autopip(autopip):
+    stdout = autopip('install autopip==1.4.2')
+    print(stdout)
+    assert re.sub('/tmp/.*/system/', '/tmp/system/', stdout) == """\
+Installing autopip to /tmp/system/autopip/1.4.2
+Auto-update will be disabled since we are pinning to a specific version.
+To enable, re-run without pinning to specific version with --update option
+Updating script symlinks in /tmp/system/bin
++ app
++ autopip
+"""
+    stdout = autopip('list auto --scripts')
+    assert re.sub(' +autopip', ' ' * 32 + 'autopip', re.sub('/tmp/.*/system/', '/tmp/system/', stdout)) == """\
+autopip  1.4.2  /tmp/system/autopip/1.4.2  
+                /tmp/system/bin/app        
+                                autopip    
+"""  # noqa
+
+    assert autopip('uninstall autopip') == 'Uninstalling autopip\n'
 
 
 def test_autopip_group(monkeypatch, autopip):
@@ -150,6 +182,7 @@ def test_autopip_group(monkeypatch, autopip):
     assert 'system/bumper/0.1.10' in autopip('list')
     assert f'system/developer-tools/{installed_version}' in autopip('list')
     assert autopip('list --scripts').split('\n')[1].strip().endswith('/bin/bump')
+    assert autopip('list blah') == 'No apps matching "blah"\n'
 
     # Uninstall autopip
     assert autopip('uninstall autopip') == ('! autopip can not be uninstalled until other apps are uninstalled: '

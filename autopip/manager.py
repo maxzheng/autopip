@@ -404,6 +404,8 @@ class App:
 
             try:
                 info(f'Installing {self.name} to {version_path}')
+
+                os.environ.pop('PYTHONPATH', None)
                 if 'VIRTUAL_ENV' in os.environ:
                     old_venv_dir = os.environ.pop('VIRTUAL_ENV')
                     old_path = os.environ['PATH']
