@@ -272,7 +272,7 @@ class AppsManager:
             try:
                 crontab.remove('autopip')
             except Exception as e:
-                debug(e)
+                debug('Could not remove crontab for autopip: %s', e)
 
     def update(self, apps=None, wait=False):
         """
@@ -299,7 +299,7 @@ class AppsManager:
                 try:
                     crontab.remove('autopip')
                 except Exception as e:
-                    debug(e)
+                    debug('Could not remove crontab for autopip: %s', e)
 
         elif list(self.apps):
             info('No apps found matching: %s', ', '.join(apps))
@@ -404,22 +404,23 @@ class App:
 
             old_venv_dir = None
             old_path = None
+            no_compile = '--no-compile ' if os.getuid() else ''
+
+            info(f'Installing {self.name} to {version_path}')
+
+            os.environ.pop('PYTHONPATH', None)
+            if 'VIRTUAL_ENV' in os.environ:
+                old_venv_dir = os.environ.pop('VIRTUAL_ENV')
+                old_path = os.environ['PATH']
+                os.environ['PATH'] = os.pathsep.join([p for p in os.environ['PATH'].split(os.pathsep)
+                                                      if os.path.exists(p) and not p.startswith(old_venv_dir)])
 
             try:
-                info(f'Installing {self.name} to {version_path}')
-
-                os.environ.pop('PYTHONPATH', None)
-                if 'VIRTUAL_ENV' in os.environ:
-                    old_venv_dir = os.environ.pop('VIRTUAL_ENV')
-                    old_path = os.environ['PATH']
-                    os.environ['PATH'] = os.pathsep.join([p for p in os.environ['PATH'].split(os.pathsep)
-                                                          if os.path.exists(p) and not p.startswith(old_venv_dir)])
-
                 run(f"""set -e
                     {venv} {version_path}
                     source {version_path / 'bin' / 'activate'}
                     pip install --upgrade pip wheel
-                    pip install {self.name}=={version}
+                    pip install {no_compile}{self.name}=={version}
                     """, executable='/bin/bash', stderr=STDOUT, shell=True)
 
             except BaseException as e:
@@ -497,7 +498,7 @@ class App:
                     try:
                         crontab.remove(self._crontab_id)
                     except exceptions.MissingError as e:
-                        debug(e)
+                        debug('Could not remove crontab for %s: %s', self._crontab_id, e)
 
             elif update:
                 try:
@@ -521,7 +522,7 @@ class App:
                             crontab.remove('autopip')
 
                     except Exception as e:
-                        debug(e)
+                        debug('Could not migrate old crontabs: %s', e)
 
                     crontab.add(f'{autopip_path} update '
                                 f'2>&1 >> {self.paths.log_root / "cron.log"}', cmd_id='autopip update')
@@ -572,7 +573,7 @@ class App:
         if not printed_updating and sys.stdout.isatty() and current_scripts and 'update' not in sys.argv:
             info('Scripts are in {}: {}'.format(self.paths.symlink_root, ', '.join(sorted(current_scripts))))
 
-        # Non-root installs
+        # Remove pyc for non-root installs for all versions, not just current.
         if os.getuid():
             try:
                 run(f'find {self.path} -name *.pyc | xargs rm', executable='/bin/bash', stderr=STDOUT, shell=True)
@@ -654,7 +655,7 @@ class App:
         try:
             crontab.remove(self._crontab_id)
         except exceptions.MissingError as e:
-            debug(e)
+            debug('Could not remove crontab for %s: %s', self._crontab_id, e)
 
         for script in self.scripts():
             script_symlink = self.paths.symlink_root / script

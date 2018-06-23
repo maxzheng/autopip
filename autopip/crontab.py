@@ -1,9 +1,10 @@
 import platform
 from random import randint
 import re
-from subprocess import check_output as run, STDOUT
+from subprocess import STDOUT
 
 from autopip.exceptions import MissingError
+from autopip.utils import run
 
 
 def _ensure_cron():
