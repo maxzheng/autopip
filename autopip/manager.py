@@ -457,7 +457,7 @@ class App:
                     source {version_path / 'bin' / 'activate'}
                     pip uninstall --yes pip
 
-                    # Keep pkg_resources from setuptools for pkg inspection (autopip/inspect.py)
+                    # Keep pkg_resources from setuptools for pkg inspection (autopip/inspect_app.py)
                     rm -rf {version_path}/lib/python*/site-packages/setuptools*
                     """, executable='/bin/bash', stderr=STDOUT, shell=True)
 
