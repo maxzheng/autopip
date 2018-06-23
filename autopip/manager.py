@@ -420,9 +420,7 @@ class App:
                     source {version_path / 'bin' / 'activate'}
                     pip install --upgrade pip wheel
                     pip install {self.name}=={version}
-                    pip uninstall --yes wheel setuptools pkg-resources
-                    pip install {version_path / 'share' / 'python-wheels' / 'pkg_resources-0.0.0-py2.py3-none-any.whl' }
-                    pip uninstall --yes pip
+                    pip uninstall --yes wheel pip
                     """, executable='/bin/bash', stderr=STDOUT, shell=True)
 
             except BaseException as e:
