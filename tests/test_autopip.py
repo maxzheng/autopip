@@ -167,7 +167,7 @@ please specify it using --python option.
 """)
 
 
-@pytest.mark.skipif(not os.environ.get('MORE'), reason='Too slow. Set MORE=1 to run')
+@pytest.mark.skipif(not os.environ.get('ALL'), reason='Too slow. Set ALL=1 to run')
 def test_install_python2_using_python3(autopip, ):
     assert autopip('install pantsbuild.pants==1.6.0') == """\
 Installing pantsbuild.pants to /tmp/system/pantsbuild.pants/1.6.0

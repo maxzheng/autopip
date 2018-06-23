@@ -417,9 +417,12 @@ class App:
 
                 run(f"""set -e
                     {venv} {version_path}
-                    source {version_path / 'bin/activate'}
+                    source {version_path / 'bin' / 'activate'}
                     pip install --upgrade pip wheel
                     pip install {self.name}=={version}
+                    pip uninstall --yes wheel setuptools pkg-resources
+                    pip install {version_path / 'share' / 'python-wheels' / 'pkg_resources-0.0.0-py2.py3-none-any.whl' }
+                    pip uninstall --yes pip
                     """, executable='/bin/bash', stderr=STDOUT, shell=True)
 
             except BaseException as e:
@@ -449,6 +452,8 @@ class App:
                 if old_venv_dir:
                     os.environ['VIRTUAL_ENV'] = old_venv_dir
                     os.environ['PATH'] = old_path
+
+            shutil.rmtree(version_path / 'share' / 'python-wheels', ignore_errors=True)
 
         # Update current symlink
         if not self.current_path or self.current_path.resolve() != version_path:
