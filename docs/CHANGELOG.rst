@@ -1,5 +1,11 @@
-Version 1.4.3
+Version 1.4.4
 ================================================================================
+
+* Remove wheel/setuptools/pip after install as they will not be used anymore
+* Add more tests
+
+Version 1.4.3
+--------------------------------------------------------------------------------
 
 * Remove PYTHONPATH before installing
 
