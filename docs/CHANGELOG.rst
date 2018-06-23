@@ -1,5 +1,12 @@
-Version 1.4.5
+Version 1.4.6
 ================================================================================
+
+* Remove pyc files after install
+* Remove pyc files after install is done
+* Manually remove setuptools so we can keep pkg-resources
+
+Version 1.4.5
+--------------------------------------------------------------------------------
 
 * Keep setuptools as we need pkg_resources from it and there is no whl on macOS
 
