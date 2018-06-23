@@ -1,5 +1,10 @@
-Version 1.4.7
+Version 1.4.8
 ================================================================================
+
+* Skip bytecode compile when installing for non-root install
+
+Version 1.4.7
+--------------------------------------------------------------------------------
 
 * Keep wheel as some packages (pantsbuild) depend on it and only remove pyc for non-root
 
