@@ -1,5 +1,10 @@
-Version 1.4.4
+Version 1.4.5
 ================================================================================
+
+* Keep setuptools as we need pkg_resources from it and there is no whl on macOS
+
+Version 1.4.4
+--------------------------------------------------------------------------------
 
 * Remove wheel/setuptools/pip after install as they will not be used anymore
 * Add more tests
