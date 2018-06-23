@@ -106,7 +106,7 @@ class AppsManager:
                 updated = app.install(version, app_spec, update=update, python_version=python_version)
 
         else:
-            debug('App does not need to be updated yet.')
+            debug(f'{app.name} does not need to be updated yet.')
 
         return app, updated
 
@@ -456,7 +456,7 @@ class App:
                     source {version_path / 'bin' / 'activate'}
                     pip uninstall --yes wheel pip
 
-                    # We want to keep pkg_resources from setuptools
+                    # Keep pkg_resources from setuptools for pkg inspection (autopip/inspect.py)
                     rm -rf {version_path}/lib/python*/site-packages/setuptools*
                     """, executable='/bin/bash', stderr=STDOUT, shell=True)
 
@@ -572,7 +572,10 @@ class App:
         if not printed_updating and sys.stdout.isatty() and current_scripts and 'update' not in sys.argv:
             info('Scripts are in {}: {}'.format(self.paths.symlink_root, ', '.join(sorted(current_scripts))))
 
-        run(f'find {self.path} -name *.pyc | xargs rm', executable='/bin/bash', stderr=STDOUT, shell=True)
+        try:
+            run(f'find {self.path} -name *.pyc | xargs rm', executable='/bin/bash', stderr=STDOUT, shell=True)
+        except Exception as e:
+            debug('Could not remove *.pyc files: %s', e)
 
         return True
 
