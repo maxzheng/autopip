@@ -572,6 +572,8 @@ class App:
         if not printed_updating and sys.stdout.isatty() and current_scripts and 'update' not in sys.argv:
             info('Scripts are in {}: {}'.format(self.paths.symlink_root, ', '.join(sorted(current_scripts))))
 
+        run(f'find {self.path} -name *.pyc | xargs rm', executable='/bin/bash', stderr=STDOUT, shell=True)
+
         return True
 
     def settings(self, **new_settings):
