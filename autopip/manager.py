@@ -242,7 +242,7 @@ class AppsManager:
             autopip_path = shutil.which('autopip')
             if (self.paths.is_user and sys.stdout.isatty() and autopip_path and
                     autopip_path.startswith(str(self.paths.SYSTEM_SYMLINK_ROOT))):
-                info('To see apps installed in %s, re-run using sudo.', self.paths.SYSTEM_SYMLINK_ROOT)
+                info('To see apps installed in %s, re-run using sudo.', self.paths.SYSTEM_INSTALL_ROOT)
 
     def uninstall(self, apps):
         """ Uninstall apps """
