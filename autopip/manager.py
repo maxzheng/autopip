@@ -420,7 +420,6 @@ class App:
                     source {version_path / 'bin' / 'activate'}
                     pip install --upgrade pip wheel
                     pip install {self.name}=={version}
-                    pip uninstall --yes wheel pip
                     """, executable='/bin/bash', stderr=STDOUT, shell=True)
 
             except BaseException as e:
@@ -451,7 +450,18 @@ class App:
                     os.environ['VIRTUAL_ENV'] = old_venv_dir
                     os.environ['PATH'] = old_path
 
-            shutil.rmtree(version_path / 'share' / 'python-wheels', ignore_errors=True)
+            try:
+                shutil.rmtree(version_path / 'share' / 'python-wheels', ignore_errors=True)
+                run(f"""set -e
+                    source {version_path / 'bin' / 'activate'}
+                    pip uninstall --yes wheel pip
+
+                    # We want to keep pkg_resources from setuptools
+                    rm -rf {version_path}/lib/python*/site-packages/setuptools*
+                    """, executable='/bin/bash', stderr=STDOUT, shell=True)
+
+            except Exception as e:
+                debug('Could not remove unnecessary packages/files: %s', e)
 
         # Update current symlink
         if not self.current_path or self.current_path.resolve() != version_path:
