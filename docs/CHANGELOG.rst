@@ -1,5 +1,10 @@
-Version 1.4.6
+Version 1.4.7
 ================================================================================
+
+* Keep wheel as some packages (pantsbuild) depend on it and only remove pyc for non-root
+
+Version 1.4.6
+--------------------------------------------------------------------------------
 
 * Remove pyc files after install
 * Remove pyc files after install is done
