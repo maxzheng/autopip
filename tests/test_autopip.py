@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 import re
 from subprocess import CalledProcessError
 from time import time
@@ -106,14 +105,9 @@ def test_install_lib(autopip):
 
 
 def test_install_bad_version(autopip, monkeypatch):
-    pip_conf_parser = Mock(read=Mock(side_effect=Exception('Force use of PyPI index')))
-    monkeypatch.setattr('autopip.manager.RawConfigParser', pip_conf_parser)
-
     stdout, _ = autopip('install bumper==100.*', raises=SystemExit)
     assert '! No app version matching bumper==100.*' in stdout
     assert 'Available versions: 0.1.8, 0.1.9, 0.1.10, 0.1.11, 0.1.12' in stdout
-
-    pip_conf_parser().read.assert_called_with(Path('/home/mzheng/.pip/pip.conf'))
 
 
 def test_install_no_path(autopip, monkeypatch):

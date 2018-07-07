@@ -129,7 +129,7 @@ class AppsManager:
 
         except urllib.error.HTTPError as e:
             if e.code == 404:
-                raise NameError(f'App does not exist on {self._index_url}')
+                raise NameError(f'{app_spec.name} does not exist on {self._index_url}')
 
         version_re = re.compile(app_spec.name + '-(\d+\.\d+\.\d+(?:\.\w+\d+)?)\.')
         versions = []
@@ -157,22 +157,29 @@ class AppsManager:
     def _set_index(self):
         """ Set PyPI url and auth """
         if not self._index_url:
-            try:
-                pip_conf = Path('~/.pip/pip.conf').expanduser()
-                parser = RawConfigParser()
-                parser.read(pip_conf)
-                self._index_url = parser.get('global', 'index-url')
+            for conf_file in ['~/.config/pip/pip.conf', '~/.pip/pip.conf', '/etc/pip.conf']:
+                pip_conf = Path(conf_file).expanduser()
+                if not pip_conf.exists():
+                    continue
 
-                auth_re = re.compile('//([^:]+)(?::([^@]+))?@')
-                match = auth_re.search(self._index_url)
-                if match:
-                    self._index_auth = match.groups()
-                    self._index_url = auth_re.sub('//', self._index_url)
+                try:
+                    parser = RawConfigParser()
+                    parser.read(pip_conf)
+                    self._index_url = parser.get('global', 'index-url')
 
-                if not self._index_url.endswith('/'):
-                    self._index_url += '/'
+                    auth_re = re.compile('//([^:]+)(?::([^@]+))?@')
+                    match = auth_re.search(self._index_url)
+                    if match:
+                        self._index_auth = match.groups()
+                        self._index_url = auth_re.sub('//', self._index_url)
 
-            except Exception:
+                    if not self._index_url.endswith('/'):
+                        self._index_url += '/'
+
+                except Exception:
+                    pass
+
+            if not self._index_url:
                 self._index_url = 'https://pypi.org/simple/'
 
     @property
@@ -456,9 +463,6 @@ class App:
                 run(f"""set -e
                     source {version_path / 'bin' / 'activate'}
                     pip uninstall --yes pip
-
-                    # Keep pkg_resources from setuptools for pkg inspection (autopip/inspect_app.py)
-                    rm -rf {version_path}/lib/python*/site-packages/setuptools*
                     """, executable='/bin/bash', stderr=STDOUT, shell=True)
 
             except Exception as e:
