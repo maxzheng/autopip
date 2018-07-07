@@ -1,5 +1,12 @@
-Version 1.4.8
+Version 1.4.9
 ================================================================================
+
+* Check other paths for pip.conf and also restore setuptools as flake8 pkg depends on it
+* Increase run test parallel to 10
+* Show system install root instead of symlink root
+
+Version 1.4.8
+--------------------------------------------------------------------------------
 
 * Skip bytecode compile when installing for non-root install
 
