@@ -131,7 +131,7 @@ def check_venv():
 
 def check_setuptools():
     try:
-        version_str = run('python' + PY_VERSION + ' -m easy_install --version', return_output=True)
+        version_str = run('python' + PY_VERSION + ' -m easy_install --version', return_output=True, raises=True)
 
     except Exception:
         error('! setuptools is not installed.')
@@ -146,7 +146,7 @@ def check_setuptools():
 
 def check_wheel():
     try:
-        version_str = run('python' + PY_VERSION + ' -m wheel version ', return_output=True)
+        version_str = run('python' + PY_VERSION + ' -m wheel version ', return_output=True, raises=True)
 
     except Exception:
         error('! wheel is not installed.')
