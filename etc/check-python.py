@@ -47,8 +47,9 @@ def check_python():
     py3_path = run('which python' + PY_VERSION, return_output=True)
     if not py3_path:
         error('! Python ' + PY_VERSION + ' is not installed.')
-        print('  autopip supports Python {}.'.format(', '.join(SUPPORTED_VERSIONS)) +
-              ' To check a different version, re-run using "python - --version x.y"')
+        if '--version' not in sys.argv:
+            print('  autopip supports Python {}.'.format(', '.join(SUPPORTED_VERSIONS)) +
+                  ' To check a different version, re-run using "python - --version x.y"')
 
         if IS_OLD_DEBIAN:
             raise AutoFixSuggestion('To install, run',
@@ -90,8 +91,9 @@ def check_pip():
     if 'python ' + PY_VERSION not in version_full:
         print('  ' + version_full.strip())
         error('! pip3 is pointing to another Python version and not Python ' + PY_VERSION)
-        print('  autopip supports Python {}.'.format(', '.join(SUPPORTED_VERSIONS)) +
-              ' To check a different version, re-run using "python - --version x.y"')
+        if '--version' not in sys.argv:
+            print('  autopip supports Python {}.'.format(', '.join(SUPPORTED_VERSIONS)) +
+                  ' To check a different version, re-run using "python - --version x.y"')
 
         raise AutoFixSuggestion('To re-install for Python ' + PY_VERSION + ', run',
                                 'curl -s https://bootstrap.pypa.io/get-pip.py | ' + SUDO + 'python' + PY_VERSION)
