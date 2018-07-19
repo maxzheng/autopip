@@ -9,7 +9,7 @@ atomically creates symlinks for installed scripts in `/usr/local/bin` so you can
 installed cleanly into its own virtual environment. Optionally, it can setup crontab entries to install apps on a
 schedule to keep them updated automatically.
 
-Before starting, check your Python installation::
+Before starting, check your Python installation -- Python 3.6 and 3.7 are supported::
 
     curl -s https://raw.githubusercontent.com/maxzheng/autopip/master/etc/check-python.py | python
 
