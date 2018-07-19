@@ -7,6 +7,7 @@ from mock import MagicMock, Mock, call
 import pytest
 
 from autopip.utils import run
+from autopip.constants import PYTHON_VERSION
 
 
 def test_autopip_common(monkeypatch, autopip, capsys, mock_paths):
@@ -32,8 +33,9 @@ def test_autopip_common(monkeypatch, autopip, capsys, mock_paths):
         call('which crontab', shell=True, stderr=-2),
         call('ps -ef | grep /usr/sbin/cron | grep -v grep', shell=True, stderr=-2)
         ]
-    update_call = re.sub('/tmp/.*/system/', '/tmp/system/', re.sub('/home/.*virtualenvs/', '/home/venv/',
-                         mock_run.call_args_list[-1][0][0]))
+    update_call = re.sub('/tmp/.*/system/', '/tmp/system/',
+                         re.sub('/home/.*virtualenvs/autopip[^/]*', '/home/venv/autopip',
+                                mock_run.call_args_list[-1][0][0]))
     assert update_call == (
         '( crontab -l | grep -vi "autopip update"; echo "10 * * * * PATH=/usr/local/bin:\$PATH '
         '/home/venv/autopip/bin/autopip update 2>&1 >> /tmp/system/log/cron.log" ) | crontab -')
@@ -114,7 +116,8 @@ def test_install_no_path(autopip, monkeypatch):
     monkeypatch.setenv('PATH', '')
     stdout, _ = autopip('install bumper', raises=SystemExit)
 
-    assert stdout == '! python3.6 does not exist. Please install it first, or ensure its path is in PATH.\n'
+    assert stdout == (f'! python{PYTHON_VERSION} does not exist. '
+                      'Please install it first, or ensure its path is in PATH.\n')
 
 
 def test_install_python_2(autopip, mock_paths):
@@ -150,9 +153,9 @@ def test_install_python2_using_python3_mock(autopip, mock_run):
     mock_run.side_effect = CalledProcessError(1, 'cmd',
                                               output='some-pkg is a builtin module since Python 3'.encode())
     stdout, _ = autopip('install pantsbuild.pants==1.6.0', raises=SystemExit)
-    assert stdout.startswith("""\
+    assert stdout.startswith(f"""\
 Installing pantsbuild.pants to /tmp/system/pantsbuild.pants/1.6.0
-Failed to install using Python 3.6 venv, let's try using Python 2 virtualenv.
+Failed to install using Python {PYTHON_VERSION} venv, let's try using Python 2 virtualenv.
 Installing pantsbuild.pants to /tmp/system/pantsbuild.pants/1.6.0
 some-pkg is a builtin module since Python 3
 ! Failed to install using Python 2. If this app requires a different Python version, \
@@ -163,9 +166,9 @@ please specify it using --python option.
 
 @pytest.mark.skipif(not os.environ.get('ALL'), reason='Too slow. Set ALL=1 to run')
 def test_install_python2_using_python3(autopip, ):
-    assert autopip('install pantsbuild.pants==1.6.0') == """\
+    assert autopip('install pantsbuild.pants==1.6.0') == f"""\
 Installing pantsbuild.pants to /tmp/system/pantsbuild.pants/1.6.0
-Failed to install using Python 3.6 venv, let's try using Python 2 virtualenv.
+Failed to install using Python {PYTHON_VERSION} venv, let's try using Python 2 virtualenv.
 Installing pantsbuild.pants to /tmp/system/pantsbuild.pants/1.6.0
 Auto-update will be disabled since we are pinning to a specific version.
 To enable, re-run without pinning to specific version with --update option
@@ -230,8 +233,9 @@ def test_autopip_group(monkeypatch, autopip):
         call('which crontab', shell=True, stderr=-2),
         call('ps -ef | grep /usr/sbin/cron | grep -v grep', shell=True, stderr=-2)
         ]
-    update_call = re.sub('/tmp/.*/system/', '/tmp/system/', re.sub('/home/.*virtualenvs/', '/home/venv/',
-                         mock_run.call_args_list[-1][0][0]))
+    update_call = re.sub('/tmp/.*/system/', '/tmp/system/',
+                         re.sub('/home/.*virtualenvs/autopip[^/]*', '/home/venv/autopip',
+                                mock_run.call_args_list[-1][0][0]))
     assert update_call == (
         '( crontab -l | grep -vi "autopip update"; echo "10 * * * * PATH=/usr/local/bin:\$PATH '
         '/home/venv/autopip/bin/autopip update 2>&1 >> /tmp/system/log/cron.log" ) | crontab -')

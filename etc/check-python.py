@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import argparse
 import os
 import platform
 import shutil
@@ -7,12 +8,17 @@ import subprocess
 import sys
 
 
+parser = argparse.ArgumentParser(description='Check and fix Python installation')
+parser.add_argument('--autofix', action='store_true', help='Automatically fix any problems found')
+parser.add_argument('--version', default='3.6', help='Python version to check')
+args = parser.parse_args()
+
 IS_DEBIAN = platform.system() == 'Linux' and (platform.dist()[0] in ('Ubuntu', 'Debian'))
 IS_OLD_DEBIAN = IS_DEBIAN and int(platform.dist()[1].split('.')[0]) < 18
 IS_MACOS = platform.system() == 'Darwin'
-PY_VERSION = '3.6'
+PY_VERSION = args.version
 SUDO = 'sudo ' if os.getuid() else ''
-AUTOFIX = '--autofix' in sys.argv
+AUTOFIX = args.autofix
 
 
 def check_sudo():
@@ -77,7 +83,7 @@ def check_pip():
 
     version_full = run('pip3 --version', return_output=True)
 
-    if 'python' + PY_VERSION not in version_full:
+    if 'python ' + PY_VERSION not in version_full:
         print('  ' + version_full.strip())
         error('! pip3 is pointing to another Python version and not Python ' + PY_VERSION)
 
