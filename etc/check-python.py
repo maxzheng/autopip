@@ -7,17 +7,19 @@ import shutil
 import subprocess
 import sys
 
-
-parser = argparse.ArgumentParser(description='Check and fix Python installation')
-parser.add_argument('--autofix', action='store_true', help='Automatically fix any problems found')
-parser.add_argument('--version', default='3.6', help='Python version to check')
-args = parser.parse_args()
-
+SUPPORTED_VERSIONS = ('3.6', '3.7')
 IS_DEBIAN = platform.system() == 'Linux' and (platform.dist()[0] in ('Ubuntu', 'Debian'))
 IS_OLD_DEBIAN = IS_DEBIAN and int(platform.dist()[1].split('.')[0]) < 18
 IS_MACOS = platform.system() == 'Darwin'
-PY_VERSION = args.version
 SUDO = 'sudo ' if os.getuid() else ''
+
+parser = argparse.ArgumentParser(description='Check and fix Python installation')
+parser.add_argument('--autofix', action='store_true', help='Automatically fix any problems found')
+parser.add_argument('--version', default=SUPPORTED_VERSIONS[0], choices=SUPPORTED_VERSIONS,
+                    help='Python version to check')
+args = parser.parse_args()
+
+PY_VERSION = args.version
 AUTOFIX = args.autofix
 
 
@@ -86,6 +88,8 @@ def check_pip():
     if 'python ' + PY_VERSION not in version_full:
         print('  ' + version_full.strip())
         error('! pip3 is pointing to another Python version and not Python ' + PY_VERSION)
+        print('  autopip supports Python {}.'.format(', '.join(SUPPORTED_VERSIONS)) +
+              ' To check a different version, re-run using "python - --version x.y"')
 
         raise AutoFixSuggestion('To re-install for Python ' + PY_VERSION + ', run',
                                 'curl -s https://bootstrap.pypa.io/get-pip.py | ' + SUDO + 'python' + PY_VERSION)
