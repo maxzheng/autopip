@@ -1,3 +1,13 @@
+Version 1.5.0
+================================================================================
+
+* Only show hint when --version was not used
+* Add another hint for checking different Python version
+* State supported Python versions
+* Add hint about checking different Python version
+* Support Python 3.7
+* Raise error when failed to get version for setuptools and wheel
+
 Version 1.4.9
 ================================================================================
 
