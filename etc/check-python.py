@@ -3,13 +3,15 @@
 import argparse
 import os
 import platform
+import re
 import shutil
 import subprocess
 import sys
 
 SUPPORTED_VERSIONS = ('3.6', '3.7')
-IS_DEBIAN = platform.system() == 'Linux' and (platform.dist()[0] in ('Ubuntu', 'Debian'))
-IS_OLD_DEBIAN = IS_DEBIAN and int(platform.dist()[1].split('.')[0]) < 18
+IS_DEBIAN = platform.system() == 'Linux' and os.path.exists('/etc/debian_version')
+IS_OLD_UBUNTU = (IS_DEBIAN and os.path.exists('/etc/lsb-release') and
+                 re.search('RELEASE=1[46]', open('/etc/lsb-release').read()))
 IS_MACOS = platform.system() == 'Darwin'
 SUDO = 'sudo ' if os.getuid() else ''
 
@@ -51,7 +53,7 @@ def check_python():
             print('  autopip supports Python {}.'.format(', '.join(SUPPORTED_VERSIONS)) +
                   ' To check a different version, re-run using "python - --version x.y"')
 
-        if IS_OLD_DEBIAN:
+        if IS_OLD_UBUNTU:
             raise AutoFixSuggestion('To install, run',
                                     (SUDO + 'apt-get update',
                                      SUDO + 'apt-get install -y software-properties-common',
@@ -130,7 +132,7 @@ def check_venv():
                 raises=True)
 
         except Exception as e:
-            if shutil.which('virtualenv'):
+            if run('which virtualenv', return_output=True):
                 error('! Could not create virtual environment.')
                 print('  ' + str(e))
                 sys.exit(1)
