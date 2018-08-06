@@ -3,13 +3,14 @@ autopip
 
 Easily install apps from PyPI and automatically keep them updated.
 
-`autopip` automates the creation of a virtual environment using `venv <https://docs.python.org/3/library/venv.html>`_,
-installs any Python package with scripts (i.e. app) from PyPI using `pip <https://pypi.org/project/pip/>`_, and
-atomically creates symlinks for installed scripts in `/usr/local/bin` so you can easily use them. Each app version is
-installed cleanly into its own virtual environment. Optionally, it can setup crontab entries to install apps on a
-schedule to keep them updated automatically.
+`autopip` automates the creation of a virtual environment using `venv <https://docs.python.org/3/library/venv.html>`_ or
+`virtualenv <https://virtualenv.pypa.io/>`_, installs any Python package with scripts (i.e. app) from PyPI using
+`pip <https://pypi.org/project/pip/>`_, and atomically creates symlinks for installed scripts in `/usr/local/bin` so
+you can easily use them. Each app version is installed cleanly into its own virtual environment. Optionally, it can
+setup crontab entries to update apps automatically.
 
-Before starting, check your Python installation -- Python 3.6 and 3.7 are supported::
+Before starting, check your Python installation -- while `autopip` can install Python apps that run on any Python
+version, it requires Python 3.6+ to run::
 
     curl -s https://raw.githubusercontent.com/maxzheng/autopip/master/etc/check-python.py | python
 
@@ -26,7 +27,7 @@ installing Python apps::
     source ~/.virtualenvs/autopip/bin/activate
     pip3 install autopip
 
-Optionally, create install directories and chown to your user so that ``autopip`` can create symlinks in
+Optionally, create installation directories and chown to your user so that ``autopip`` can create symlinks in
 `/usr/local/bin`::
 
     sudo mkdir /usr/local/opt /usr/local/var
