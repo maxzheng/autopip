@@ -54,11 +54,8 @@ def cli_args():
                                            help='Install apps in their own virtual environments '
                                                 'that automatically updates')
     install_parser.add_argument('apps', nargs='+', help='Apps to install')
-    default_update = UpdateFreq.DEFAULT.name.lower() if parser.prog == 'autopip' else None
     install_parser.add_argument('--update', choices=[m.name.lower() for m in UpdateFreq],
-                                default=default_update,
-                                help='How often to update the app. {}'.format(
-                                    '[default: %(default)s]' if default_update else ''))
+                                help='How often to update the app via cron.')
     install_parser.add_argument('--python', metavar='VERSION', default=PYTHON_VERSION,
                                 help='Python version to run the app. [default: %(default)s]')
     install_parser.set_defaults(command='install')

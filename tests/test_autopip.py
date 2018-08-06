@@ -17,7 +17,7 @@ def test_autopip_common(monkeypatch, autopip, capsys, mock_paths):
     monkeypatch.setattr('autopip.crontab.randint', Mock(return_value=10))
 
     # Install latest
-    stdout = autopip('install bumper')
+    stdout = autopip('install bumper --update hourly')
     assert 'Installing bumper to' in stdout
     assert 'Updating script symlinks in' in stdout
     assert '+ bump' in stdout
@@ -45,7 +45,7 @@ def test_autopip_common(monkeypatch, autopip, capsys, mock_paths):
 
     # Already installed
     mock_run.reset_mock()
-    assert autopip('install bumper') == """\
+    assert autopip('install bumper --update hourly') == """\
 bumper is up-to-date
 Hourly auto-update enabled via cron service
 Scripts are in /tmp/system/bin: bump
@@ -122,7 +122,7 @@ def test_install_no_path(autopip, monkeypatch):
 
 def test_install_python_2(autopip, mock_paths):
     system_path, _, _ = mock_paths
-    assert autopip('install bumper --python 2.7') == """\
+    assert autopip('install bumper --python 2.7 --update hourly') == """\
 Installing bumper to /tmp/system/bumper/0.1.13
 Hourly auto-update enabled via cron service
 Updating script symlinks in /tmp/system/bin
@@ -179,7 +179,7 @@ Updating script symlinks in /tmp/system/bin
 
 
 def test_install_autopip(autopip, monkeypatch):
-    assert autopip('install autopip==1.4.2') == """\
+    assert autopip('install autopip==1.4.2 --update hourly') == """\
 Installing autopip to /tmp/system/autopip/1.4.2
 Auto-update will be disabled since we are pinning to a specific version.
 To enable, re-run without pinning to specific version with --update option

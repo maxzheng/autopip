@@ -36,9 +36,9 @@ Now, you can easily install any apps from PyPI:
 
 .. code-block:: console
 
-    $ autopip install workspace-tools
+    $ autopip install workspace-tools --update daily
     Installing workspace-tools to /usr/local/opt/apps/workspace-tools/3.2.2
-    Hourly auto-update enabled via cron service
+    Daily auto-update enabled via cron service
     Updating symlinks in /usr/local/bin
     + wst
 
@@ -49,9 +49,7 @@ script symlinks to `/usr/local/bin`, either chown/chmod dirs in `/usr/local/*` t
 above or run ``autopip`` using ``sudo`` (i.e. as root). To see why a particular path is selected, append ``--debug``
 after ``autopip`` when running it.
 
-To save typing a few letters, you can also use the ``app`` alias -- short for **a**\ uto\ **p**\ i\ **p**. It is the
-same as ``autopip`` except it does not auto-update unless you provide a value to ``--update``
-option (e.g. hourly, daily, weekly, monthly).
+To save typing a few letters, you can also use the ``app`` alias -- short for **a**\ uto\ **p**\ i\ **p**.
 
 .. code-block:: console
 
@@ -78,7 +76,7 @@ To show currently installed apps and their scripts:
                                  /usr/local/bin/ah
     ducktape             0.7.3   /usr/local/opt/apps/ducktape/0.7.3
                                  /usr/local/bin/ducktape
-    workspace-tools      3.2.2   /usr/local/opt/apps/workspace-tools/3.2.2      [updates hourly]
+    workspace-tools      3.2.2   /usr/local/opt/apps/workspace-tools/3.2.2      [updates daily]
                                  /usr/local/bin/wst
 
 To manually update all apps:
