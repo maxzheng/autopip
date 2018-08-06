@@ -1,5 +1,10 @@
-Version 1.5.1
+Version 1.5.2
 ================================================================================
+
+* Update readme
+
+Version 1.5.1
+--------------------------------------------------------------------------------
 
 * Remove default update so autopip is the same as app command
 * Remove use of platform.dist() as it is deprecated in 3.7
