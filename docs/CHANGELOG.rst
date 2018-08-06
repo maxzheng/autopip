@@ -1,5 +1,11 @@
-Version 1.5.0
+Version 1.5.1
 ================================================================================
+
+* Remove default update so autopip is the same as app command
+* Remove use of platform.dist() as it is deprecated in 3.7
+
+Version 1.5.0
+--------------------------------------------------------------------------------
 
 * Only show hint when --version was not used
 * Add another hint for checking different Python version
