@@ -1,5 +1,10 @@
-Version 1.5.2
+Version 1.5.3
 ================================================================================
+
+* Skip cron check for macOS as it might not start cron until there is a crontab entry
+
+Version 1.5.2
+--------------------------------------------------------------------------------
 
 * Update readme
 
