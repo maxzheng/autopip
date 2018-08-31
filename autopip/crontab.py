@@ -20,10 +20,9 @@ def _ensure_cron():
 
     except Exception:
         if platform.system() == 'Darwin':
-            fix = 'launchctl load /System/Library/LaunchDaemons/com.vix.cron.plist'
-        else:
-            fix = 'service cron start'
-        raise MissingError(f'cron service does not seem to be running. Try starting it: sudo {fix}')
+            return  # macOS does not start cron until there is a crontab entry: https://apple.stackexchange.com/a/266836
+
+        raise MissingError(f'cron service does not seem to be running. Try starting it: sudo service cron start')
 
 
 def add(cmd, schedule='? * * * *', cmd_id=None):
