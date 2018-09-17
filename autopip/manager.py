@@ -130,6 +130,8 @@ class AppsManager:
         except urllib.error.HTTPError as e:
             if e.code == 404:
                 raise NameError(f'{app_spec.name} does not exist on {self._index_url}')
+            else:
+                raise Exception(f'Failed to read from {pkg_index_url}: {e}')
 
         version_re = re.compile(app_spec.name + '-(\d+\.\d+\.\d+(?:\.\w+\d+)?)\.')
         versions = []
