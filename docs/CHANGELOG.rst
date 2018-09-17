@@ -1,5 +1,10 @@
-Version 1.5.3
+Version 1.5.4
 ================================================================================
+
+* Raise error when failing to read from package index url
+
+Version 1.5.3
+--------------------------------------------------------------------------------
 
 * Skip cron check for macOS as it might not start cron until there is a crontab entry
 
