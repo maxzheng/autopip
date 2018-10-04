@@ -1,5 +1,10 @@
-Version 1.5.4
+Version 1.5.5
 ================================================================================
+
+* Show help when no command is provided
+
+Version 1.5.4
+--------------------------------------------------------------------------------
 
 * Raise error when failing to read from package index url
 
