@@ -48,7 +48,7 @@ def cli_args():
     parser = argparse.ArgumentParser(description='Easily install apps from PyPI and '
                                                  'automatically keep them updated.')
     parser.add_argument('--debug', action='store_true', help='Turn on debug mode')
-    subparsers = parser.add_subparsers(title='Commands', help='List of commands')
+    subparsers = parser.add_subparsers(title='Commands', help='List of commands', dest='command')
 
     install_parser = subparsers.add_parser('install',
                                            help='Install apps in their own virtual environments '
@@ -58,25 +58,27 @@ def cli_args():
                                 help='How often to update the app via cron.')
     install_parser.add_argument('--python', metavar='VERSION', default=PYTHON_VERSION,
                                 help='Python version to run the app. [default: %(default)s]')
-    install_parser.set_defaults(command='install')
 
     list_parser = subparsers.add_parser('list', help='List installed apps')
     list_parser.add_argument('name_filter', nargs='?', help='Optionally filter by name')
     list_parser.add_argument('--scripts', action='store_true', help='Show scripts')
-    list_parser.set_defaults(command='list')
 
     update_parser = subparsers.add_parser('update', help='Update installed apps.')
     update_parser.add_argument('apps', nargs='*', help='Apps to update. Defaults to all apps if run interactively, '
                                                        'otherwise only auto-update enabled apps (e.g. from cron).')
     update_parser.add_argument('--wait', action='store_true', help='Wait for new version to be published '
                                                                    'and then install.')
-    update_parser.set_defaults(command='update')
 
     uninstall_parser = subparsers.add_parser('uninstall', help='Uninstall apps')
     uninstall_parser.add_argument('apps', nargs='+', help='Apps to uninstall')
-    uninstall_parser.set_defaults(command='uninstall')
 
-    return parser.parse_args()
+    args = parser.parse_args()
+
+    if args.command:
+        return args
+
+    parser.print_help()
+    sys.exit(0)
 
 
 def setup_logger(debug=False):

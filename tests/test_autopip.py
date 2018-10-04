@@ -10,6 +10,13 @@ from autopip.utils import run
 from autopip.constants import PYTHON_VERSION
 
 
+def test_autopip_help(autopip, capsys):
+    autopip('', raises=SystemExit)
+    stdout, stderr = capsys.readouterr()
+
+    assert 'usage: autopip' in stdout
+
+
 def test_autopip_common(monkeypatch, autopip, capsys, mock_paths):
     system_root, _, _ = mock_paths
     mock_run = MagicMock()
