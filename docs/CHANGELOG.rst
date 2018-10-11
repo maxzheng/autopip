@@ -1,5 +1,10 @@
-Version 1.5.5
+Version 1.5.6
 ================================================================================
+
+* Change failure to get package to debug as previous version may fail
+
+Version 1.5.5
+--------------------------------------------------------------------------------
 
 * Show help when no command is provided
 
