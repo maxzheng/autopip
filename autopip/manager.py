@@ -652,7 +652,7 @@ class App:
             return json.loads(info)
 
         except Exception as e:
-            error('! Can not get package distribution info because: %s', e)
+            debug('! Can not get package distribution info because: %s', e)
 
     def uninstall(self):
         """ Uninstall app """
