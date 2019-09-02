@@ -1,5 +1,10 @@
-Version 1.5.7
+Version 1.5.8
 ================================================================================
+
+* Add app to check if waiting
+
+Version 1.5.7
+--------------------------------------------------------------------------------
 
 * Always check for update when waiting and sort available versions list
 
