@@ -1,5 +1,10 @@
-Version 1.5.6
+Version 1.5.7
 ================================================================================
+
+* Always check for update when waiting and sort available versions list
+
+Version 1.5.6
+--------------------------------------------------------------------------------
 
 * Change failure to get package to debug as previous version may fail
 
