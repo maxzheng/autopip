@@ -16,7 +16,7 @@ import urllib.error
 
 from autopip import crontab, exceptions
 from autopip.constants import UpdateFreq, PYTHON_VERSION
-from autopip.utils import run
+from autopip.utils import run, sorted_versions
 
 
 class AppsManager:
@@ -47,8 +47,8 @@ class AppsManager:
         self._set_index()
 
         autopip_path = shutil.which('autopip')
-        if (self.paths.is_user and sys.stdout.isatty() and not list(self.apps) and autopip_path and
-                autopip_path.startswith(str(self.paths.SYSTEM_SYMLINK_ROOT))):
+        if (self.paths.is_user and sys.stdout.isatty() and not list(self.apps) and autopip_path
+                and autopip_path.startswith(str(self.paths.SYSTEM_SYMLINK_ROOT))):
             info('# Based on permission, this will install to your user home instead of %s',
                  self.paths.SYSTEM_SYMLINK_ROOT)
             info('  To install for everyone, cancel using CTRL+C and then re-run using sudo.')
@@ -95,8 +95,8 @@ class AppsManager:
         updated = False
 
         # Skip update if install was done within the update frequency when run from cron
-        if (sys.stdout.isatty() or not app.is_installed or
-                update and app.path.stat().st_mtime + update.seconds < time()):
+        if (sys.stdout.isatty() or not app.is_installed or wait
+                or update and app.path.stat().st_mtime + update.seconds < time()):
             if app.is_installed:
                 app.path.touch()
 
@@ -133,7 +133,7 @@ class AppsManager:
             else:
                 raise Exception(f'Failed to read from {pkg_index_url}: {e}')
 
-        version_re = re.compile(app_spec.name + '-(\d+\.\d+\.\d+(?:\.\w+\d+)?)\.')
+        version_re = re.compile(app_spec.name + r'-(\d+\.\d+\.\d+(?:\.\w+\d+)?)\.')
         versions = []
         matched_versions = []
 
@@ -147,14 +147,12 @@ class AppsManager:
 
         if not matched_versions:
             if versions:
-                raise ValueError(f'No app version matching {app_spec} \nAvailable versions: ' + ', '.join(versions))
+                raise ValueError(f'No app version matching {app_spec} \nAvailable versions: '
+                                 + ', '.join(sorted_versions(versions)))
             else:
                 raise ValueError(f'No app version found in {pkg_index_url}')
 
-        version_sep_re = re.compile('[^0-9]+')
-        sorted_versions = sorted(matched_versions, key=lambda v: tuple(map(int, version_sep_re.split(v))))
-
-        return sorted_versions[-1]
+        return sorted_versions(matched_versions)[-1]
 
     def _set_index(self):
         """ Set PyPI url and auth """
@@ -249,8 +247,8 @@ class AppsManager:
             info('No apps are installed yet.')
 
             autopip_path = shutil.which('autopip')
-            if (self.paths.is_user and sys.stdout.isatty() and autopip_path and
-                    autopip_path.startswith(str(self.paths.SYSTEM_SYMLINK_ROOT))):
+            if (self.paths.is_user and sys.stdout.isatty() and autopip_path
+                    and autopip_path.startswith(str(self.paths.SYSTEM_SYMLINK_ROOT))):
                 info('To see apps installed in %s, re-run using sudo.', self.paths.SYSTEM_INSTALL_ROOT)
 
     def uninstall(self, apps):
@@ -626,7 +624,7 @@ class App:
                     app_specs.append((app, update or UpdateFreq.DEFAULT.name.lower()))
 
                 elif len(version.split('.')) < 3:
-                        app_specs.append((f'{app}=={version}.*', update or UpdateFreq.DEFAULT.name.lower()))
+                    app_specs.append((f'{app}=={version}.*', update or UpdateFreq.DEFAULT.name.lower()))
 
                 else:  # Specific version without auto-update
                     app_specs.append((f'{app}=={version}', None))
@@ -665,8 +663,8 @@ class App:
 
         for script in self.scripts():
             script_symlink = self.paths.symlink_root / script
-            if ((script_symlink.exists() or script_symlink.is_symlink()) and
-                    str(script_symlink.resolve()).startswith(str(self.path))):
+            if ((script_symlink.exists() or script_symlink.is_symlink())
+                    and str(script_symlink.resolve()).startswith(str(self.path))):
                 script_symlink.unlink()
 
         shutil.rmtree(self.path)
@@ -729,16 +727,17 @@ class AppsPath:
 
         # Check local
         if system_reasons:
-            if not (os.access(self.LOCAL_INSTALL_ROOT.parent, os.W_OK) or
-                    not self.LOCAL_INSTALL_ROOT.parent.exists() and
-                    os.access(self.LOCAL_INSTALL_ROOT.parent.parent, os.W_OK)):
+            if not (os.access(self.LOCAL_INSTALL_ROOT.parent, os.W_OK)
+                    or not self.LOCAL_INSTALL_ROOT.parent.exists()
+                    and os.access(self.LOCAL_INSTALL_ROOT.parent.parent, os.W_OK)):
                 local_reasons.append(f'No permission to write to {self.LOCAL_INSTALL_ROOT.parent}')
 
             if not os.access(self.LOCAL_SYMLINK_ROOT, os.W_OK):
                 local_reasons.append(f'No permission to write to {self.LOCAL_SYMLINK_ROOT}')
 
-            if not (os.access(self.LOCAL_LOG_ROOT.parent, os.W_OK) or
-                    not self.LOCAL_LOG_ROOT.parent.exists() and os.access(self.LOCAL_LOG_ROOT.parent.parent, os.W_OK)):
+            if not (os.access(self.LOCAL_LOG_ROOT.parent, os.W_OK)
+                    or not self.LOCAL_LOG_ROOT.parent.exists()
+                    and os.access(self.LOCAL_LOG_ROOT.parent.parent, os.W_OK)):
                 local_reasons.append(f'No permission to write to {self.LOCAL_LOG_ROOT.parent}')
 
             if local_reasons:
@@ -767,6 +766,6 @@ class AppsPath:
     def covers(self, path):
         """ True if the given path belongs to autopip """
         path = path.resolve() if isinstance(path, PurePath) else path
-        return (str(path).startswith(str(self.SYSTEM_INSTALL_ROOT)) or
-                str(path).startswith(str(self.LOCAL_INSTALL_ROOT)) or
-                str(path).startswith(str(self.USER_INSTALL_ROOT)))
+        return (str(path).startswith(str(self.SYSTEM_INSTALL_ROOT))
+                or str(path).startswith(str(self.LOCAL_INSTALL_ROOT))
+                or str(path).startswith(str(self.USER_INSTALL_ROOT)))
