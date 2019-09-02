@@ -296,7 +296,7 @@ class AppsManager:
                 settings = app.settings()
                 if settings.get('update'):
                     app_specs.append((settings['app_spec'], settings['update']))
-                elif sys.stdout.isatty():
+                elif sys.stdout.isatty() or wait:
                     app_specs.append((settings.get('app_spec', app.name), None))
 
             if app_specs:
