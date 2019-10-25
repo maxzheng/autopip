@@ -50,7 +50,7 @@ def add(cmd, schedule='? * * * *', cmd_id=None):
     if '?' in schedule:
         schedule = schedule.replace('?', str(randint(0, 59)))
 
-    crontab_cmd = (f'( crontab -l | grep -vi "{cmd_id}"; echo "{schedule} PATH=/usr/local/bin:\$PATH {cmd}" )'
+    crontab_cmd = (rf'( crontab -l | grep -vi "{cmd_id}"; echo "{schedule} PATH=/usr/local/bin:\$PATH {cmd}" )'
                    ' | crontab -')
     run(crontab_cmd, stderr=STDOUT, shell=True)
 

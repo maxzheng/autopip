@@ -33,7 +33,7 @@ def get_scripts(dist):
             continue
 
         if records:
-            bin_re = re.compile('\.\./bin/([^,]+),?')
+            bin_re = re.compile(r'\.\./bin/([^,]+),?')
 
             for line in records.split('\n'):
                 match = bin_re.search(line)

@@ -44,8 +44,8 @@ def test_autopip_common(monkeypatch, autopip, capsys, mock_paths):
                          re.sub('/home/.*virtualenvs/autopip[^/]*', '/home/venv/autopip',
                                 mock_run.call_args_list[-1][0][0]))
     assert update_call == (
-        '( crontab -l | grep -vi "autopip update"; echo "10 * * * * PATH=/usr/local/bin:\$PATH '
-        '/home/venv/autopip/bin/autopip update 2>&1 >> /tmp/system/log/cron.log" ) | crontab -')
+        r'( crontab -l | grep -vi "autopip update"; echo "10 * * * * PATH=/usr/local/bin:\$PATH '
+        r'/home/venv/autopip/bin/autopip update 2>&1 >> /tmp/system/log/cron.log" ) | crontab -')
 
     assert 'system/bumper/0.1.13' in autopip('list')
     assert autopip('list --scripts').split('\n')[1].strip().endswith('/bin/bump')
@@ -146,7 +146,8 @@ Updating script symlinks in /tmp/system/bin
 
 def test_install_nonexisting(autopip):
     stdout, _ = autopip('install this-does-not-exist-blah-blah', raises=SystemExit)
-    assert stdout.startswith('! No app version found in http')
+    assert stdout.startswith('! No app version found in http') \
+        or stdout.startswith('! this-does-not-exist-blah-blah does not exist on http')
 
 
 def test_install_failed(autopip, monkeypatch, mock_run):
@@ -244,8 +245,8 @@ def test_autopip_group(monkeypatch, autopip):
                          re.sub('/home/.*virtualenvs/autopip[^/]*', '/home/venv/autopip',
                                 mock_run.call_args_list[-1][0][0]))
     assert update_call == (
-        '( crontab -l | grep -vi "autopip update"; echo "10 * * * * PATH=/usr/local/bin:\$PATH '
-        '/home/venv/autopip/bin/autopip update 2>&1 >> /tmp/system/log/cron.log" ) | crontab -')
+        r'( crontab -l | grep -vi "autopip update"; echo "10 * * * * PATH=/usr/local/bin:\$PATH '
+        r'/home/venv/autopip/bin/autopip update 2>&1 >> /tmp/system/log/cron.log" ) | crontab -')
 
     assert 'system/bumper/0.1.10' in autopip('list')
     assert f'system/developer-tools/{installed_version}' in autopip('list')

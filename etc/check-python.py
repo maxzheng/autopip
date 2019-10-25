@@ -10,8 +10,8 @@ import sys
 
 SUPPORTED_VERSIONS = ('3.6', '3.7')
 IS_DEBIAN = platform.system() == 'Linux' and os.path.exists('/etc/debian_version')
-IS_OLD_UBUNTU = (IS_DEBIAN and os.path.exists('/etc/lsb-release') and
-                 re.search('RELEASE=1[46]', open('/etc/lsb-release').read()))
+IS_OLD_UBUNTU = (IS_DEBIAN and os.path.exists('/etc/lsb-release')
+                 and re.search('RELEASE=1[46]', open('/etc/lsb-release').read()))
 IS_MACOS = platform.system() == 'Darwin'
 SUDO = 'sudo ' if os.getuid() else ''
 
@@ -50,8 +50,8 @@ def check_python():
     if not py3_path:
         error('! Python ' + PY_VERSION + ' is not installed.')
         if '--version' not in sys.argv:
-            print('  autopip supports Python {}.'.format(', '.join(SUPPORTED_VERSIONS)) +
-                  ' To check a different version, re-run using "python - --version x.y"')
+            print('  autopip supports Python {}.'.format(', '.join(SUPPORTED_VERSIONS))
+                  + ' To check a different version, re-run using "python - --version x.y"')
 
         if IS_OLD_UBUNTU:
             raise AutoFixSuggestion('To install, run',
@@ -68,8 +68,8 @@ def check_python():
         elif IS_MACOS:
             raise AutoFixSuggestion('To install, run', 'brew install python')
 
-        print('  Please install Python ' + PY_VERSION +
-              ' per http://docs.python-guide.org/en/latest/starting/installation/')
+        print('  Please install Python ' + PY_VERSION
+              + ' per http://docs.python-guide.org/en/latest/starting/installation/')
         sys.exit(1)
 
 
@@ -80,12 +80,12 @@ def check_pip():
             raise AutoFixSuggestion('To install, run', SUDO + 'apt-get install -y python3-pip')
 
         elif IS_MACOS:
-            raise AutoFixSuggestion('To install, run', 'curl -s https://bootstrap.pypa.io/get-pip.py | ' +
-                                    SUDO + 'python' + PY_VERSION)
-        print('  If your package repo has a *-pip package for Python ' + PY_VERSION +
-              ', then installing it from there is recommended.')
-        print('  To install directly, run: curl -s https://bootstrap.pypa.io/get-pip.py | ' +
-              SUDO + 'python' + PY_VERSION)
+            raise AutoFixSuggestion('To install, run', 'curl -s https://bootstrap.pypa.io/get-pip.py | '
+                                    + SUDO + 'python' + PY_VERSION)
+        print('  If your package repo has a *-pip package for Python ' + PY_VERSION
+              + ', then installing it from there is recommended.')
+        print('  To install directly, run: curl -s https://bootstrap.pypa.io/get-pip.py | '
+              + SUDO + 'python' + PY_VERSION)
         sys.exit(1)
 
     version_full = run('pip3 --version', return_output=True)
@@ -94,8 +94,8 @@ def check_pip():
         print('  ' + version_full.strip())
         error('! pip3 is pointing to another Python version and not Python ' + PY_VERSION)
         if '--version' not in sys.argv:
-            print('  autopip supports Python {}.'.format(', '.join(SUPPORTED_VERSIONS)) +
-                  ' To check a different version, re-run using "python - --version x.y"')
+            print('  autopip supports Python {}.'.format(', '.join(SUPPORTED_VERSIONS))
+                  + ' To check a different version, re-run using "python - --version x.y"')
 
         raise AutoFixSuggestion('To re-install for Python ' + PY_VERSION + ', run',
                                 'curl -s https://bootstrap.pypa.io/get-pip.py | ' + SUDO + 'python' + PY_VERSION)
@@ -176,8 +176,8 @@ def check_wheel():
 
 
 def check_python_dev():
-    include_path = run('python' + PY_VERSION +
-                       ' -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())"',
+    include_path = run('python' + PY_VERSION
+                       + ' -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())"',
                        return_output=True)
     if not include_path:
         error('! Failed to get Python include path, so not sure if Python dev package is installed')
@@ -222,7 +222,7 @@ def run(cmd, return_output=False, raises=False, **kwargs):
 def _int_or(value):
     try:
         return int(value)
-    except Exception as e:
+    except Exception:
         return value
 
 
