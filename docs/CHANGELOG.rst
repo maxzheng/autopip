@@ -1,5 +1,14 @@
-Version 1.5.8
+Version 1.5.9
 ================================================================================
+
+* Support reading credentials from .netrc
+* Fix style issues
+* Update pythonpackage.yml
+* Trigger job
+* Update pythonpackage.yml
+
+Version 1.5.8
+--------------------------------------------------------------------------------
 
 * Add app to check if waiting
 
