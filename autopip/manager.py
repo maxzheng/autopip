@@ -158,29 +158,76 @@ class AppsManager:
         """ Set PyPI url and auth """
         if not self._index_url:
             for conf_file in ['~/.config/pip/pip.conf', '~/.pip/pip.conf', '/etc/pip.conf']:
-                pip_conf = Path(conf_file).expanduser()
-                if not pip_conf.exists():
-                    continue
+                self._index_url, self._index_auth = self._parse_pip_conf_for_index(conf_file)
+                if self._index_url:
+                    break
 
+            if self._index_url and not self._index_auth:
+                self._index_auth = self._parse_netrc_credential_for(self._index_url)
+
+            if not self._index_url:  # No need to check for login/password for this as everything is public
+                self._index_url = 'https://pypi.org/simple/'
+
+    @staticmethod
+    def _parse_pip_conf_for_index(conf_file):
+        """
+        Parse the given pip.conf file for index-url
+
+        :param str pip_conf_path: Path to pip.conf file
+        :return: Tuple of index_url and another tuple of user and password (or None)
+        """
+        index_url = index_auth = None
+
+        pip_conf = Path(conf_file).expanduser()
+        if pip_conf.exists():
+            try:
+                parser = RawConfigParser()
+                parser.read(pip_conf)
+
+                index_url = parser.get('global', 'index-url')
+
+                auth_re = re.compile('//([^:]+)(?::([^@]+))?@')
+                match = auth_re.search(index_url)
+                if match:
+                    index_auth = match.groups()
+                    index_url = auth_re.sub('//', index_url)
+
+                if not index_url.endswith('/'):
+                    index_url += '/'
+
+            except Exception:
+                pass
+
+        return index_url, index_auth
+
+    @staticmethod
+    def _parse_netrc_credential_for(index_url, netrc_file='~/.netrc'):
+        """
+        Parse .netrc for login/password for the given index_url
+
+        :param str index_url: Machine URL to find credential for
+        :return: Tuple of login and password or None
+        """
+        netrc = Path(netrc_file).expanduser()
+        if netrc.exists():
+            machine = login = password = None
+            for line in netrc.open():
                 try:
-                    parser = RawConfigParser()
-                    parser.read(pip_conf)
-                    self._index_url = parser.get('global', 'index-url')
-
-                    auth_re = re.compile('//([^:]+)(?::([^@]+))?@')
-                    match = auth_re.search(self._index_url)
-                    if match:
-                        self._index_auth = match.groups()
-                        self._index_url = auth_re.sub('//', self._index_url)
-
-                    if not self._index_url.endswith('/'):
-                        self._index_url += '/'
+                    _, machine, _, login, _, password = line.strip().split()
 
                 except Exception:
-                    pass
+                    name, value = line.strip().split()
+                    if name == 'machine':
+                        machine = value
+                    elif name == 'login':
+                        login = value
+                    elif name == 'password':
+                        password = value
 
-            if not self._index_url:
-                self._index_url = 'https://pypi.org/simple/'
+                if password:
+                    if machine in index_url:
+                        return (login, password)
+                    machine = login = password = None
 
     @property
     def apps(self):
