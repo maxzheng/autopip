@@ -216,7 +216,11 @@ class AppsManager:
                     _, machine, _, login, _, password = line.strip().split()
 
                 except Exception:
-                    name, value = line.strip().split()
+                    try:
+                        name, value = line.strip().split()
+                    except Exception:
+                        continue  # Blank line or invalid format, let's skip
+
                     if name == 'machine':
                         machine = value
                     elif name == 'login':
