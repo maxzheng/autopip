@@ -104,6 +104,9 @@ And you can even keep `autopip` updated automatically by installing itself:
     * app (updated)
     * autopip (updated)
 
+    # And uninstall autopip using pip3 to avoid confusion (if it is in a different path than above)
+    $ sudo pip3 uninstall autopip
+
 Now, that's convenience! ;)
 
 If you need to use a private PyPI index, just configure `index-url` in `pip.conf
