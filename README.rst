@@ -37,11 +37,20 @@ Now, you can easily install any apps from PyPI:
 
 .. code-block:: console
 
-    $ autopip install workspace-tools --update daily
+    $ autopip install workspace-tools
     Installing workspace-tools to /usr/local/opt/apps/workspace-tools/3.2.2
-    Daily auto-update enabled via cron service
     Updating symlinks in /usr/local/bin
     + wst
+
+Optionally use the `--update` option to update it daily via cron (may require admin permission):
+
+.. code-block:: console
+
+    $ autopip install workspace-tools --update daily
+    workspace-tools is up-to-date
+    Adding to crontab (may require admin permission)
+    Daily auto-update enabled via cron service
+    Scripts are in /usr/local/bin: wst
 
 Install paths are selected based on your user's permission to write to `/opt` or `/usr/local/opt`. If you do not have
 permission for either, then ``autopip`` will install apps to your user home at `~/.apps` with script symlinks in `~/bin`
