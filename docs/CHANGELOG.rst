@@ -1,5 +1,10 @@
-Version 1.7.3
+Version 1.7.4
 ================================================================================
+
+* Update readme to split out update option
+
+Version 1.7.3
+--------------------------------------------------------------------------------
 
 * Remove code for removing old cron entry format
 
