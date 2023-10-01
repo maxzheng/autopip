@@ -7,7 +7,7 @@ Easily install apps from PyPI and automatically keep them updated.
 installs any Python package with scripts (i.e. app) from PyPI using `pip <https://pypi.org/project/pip/>`_, and
 atomically creates symlinks for installed scripts in `/usr/local/bin` so you can easily use them. Each app version is
 installed cleanly into its own virtual environment. Optionally, it can set up crontab entries to update apps
-automatically (requires admin permission).
+automatically (may require admin permission on macOS).
 
 Before starting, make sure your Python installation meets all the requirements -- while `autopip` can install Python
 apps that run on any Python version, it requires Python 3.6+ to run::
@@ -42,7 +42,7 @@ Now, you can easily install any apps from PyPI:
     Updating symlinks in /usr/local/bin
     + wst
 
-Optionally use the `--update` option to update it daily via cron (may require admin permission):
+Optionally use the `--update` option to update it daily via cron (may require admin permission on macOS):
 
 .. code-block:: console
 

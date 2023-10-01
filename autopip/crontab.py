@@ -3,6 +3,7 @@ from random import randint
 import re
 from subprocess import STDOUT
 
+from autopip.constants import IS_MACOS
 from autopip.exceptions import MissingError
 from autopip.utils import run
 
@@ -36,7 +37,8 @@ def add(cmd, schedule='? * * * *', cmd_id=None):
     :param str cmd_id: Short version of cmd that we can use to uniquely identify the command for updating purpose.
                        Defaults to cmd without any redirect chars. It must a regex that matches cmd.
     """
-    print('Adding to crontab (may require admin permission)')
+    if IS_MACOS:
+        print('Adding to crontab (may require admin permission)')
     _ensure_cron()
 
     cmd = cmd.replace('"', r'\"')
@@ -71,7 +73,8 @@ def remove(name):
     if name not in list_entries(name):
         return
 
-    print('Removing from crontab (may require admin permission)')
+    if IS_MACOS:
+        print('Removing from crontab (may require admin permission)')
     _ensure_cron()
 
     name = name.replace('"', r'\"')
