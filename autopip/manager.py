@@ -537,10 +537,6 @@ class App:
 
                 if self.settings().get('update'):
                     self.settings(update=None)
-                    try:
-                        crontab.remove(self._crontab_id)
-                    except exceptions.MissingError as e:
-                        debug('Could not remove crontab for %s: %s', self._crontab_id, e)
 
             elif update:
                 try:
@@ -693,11 +689,6 @@ class App:
     def uninstall(self):
         """ Uninstall app """
         info('Uninstalling %s', self.name)
-
-        try:
-            crontab.remove(self._crontab_id)
-        except exceptions.MissingError as e:
-            debug('Could not remove crontab for %s: %s', self._crontab_id, e)
 
         for script in self.scripts():
             script_symlink = self.paths.symlink_root / script

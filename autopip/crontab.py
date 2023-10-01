@@ -57,11 +57,13 @@ def add(cmd, schedule='? * * * *', cmd_id=None):
     run(crontab_cmd, stderr=STDOUT, shell=True)
 
 
-def list_entries(name_filter='autopip'):
+def list_entries(name='autopip'):
     """ List current schedules """
     _ensure_cron()
 
-    return run(f'crontab -l | grep {name_filter}', stderr=STDOUT, shell=True)
+    name = name.replace('"', r'\"')
+
+    return run(f'crontab -l | grep -i "{name}"', stderr=STDOUT, shell=True)
 
 
 def remove(name):
