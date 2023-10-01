@@ -11,7 +11,7 @@ def test_check(python):
     check_script = str(Path(__file__).parent.parent / 'etc' / 'check-python.py')
     cmd = [python, check_script]
 
-    if not(PYTHON_VERSION == '3.6' and python == 'python2'):
+    if not (PYTHON_VERSION == '3.6' and python == 'python2'):
         cmd.extend(['--version', PYTHON_VERSION])
 
     subprocess.check_call(cmd)

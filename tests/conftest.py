@@ -35,7 +35,7 @@ def mock_paths(monkeypatch, tmpdir):
 
 @pytest.fixture()
 def mock_run(monkeypatch):
-    r = Mock()
+    r = Mock(return_value='0 * * * * * /bin/hello')
     monkeypatch.setattr('autopip.crontab.run', r)
     monkeypatch.setattr('autopip.manager.run', r)
     return r

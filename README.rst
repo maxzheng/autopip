@@ -3,11 +3,11 @@ autopip
 
 Easily install apps from PyPI and automatically keep them updated.
 
-`autopip` automates the creation of a virtual environment using `venv <https://docs.python.org/3/library/venv.html>`_ or
-`virtualenv <https://virtualenv.pypa.io/>`_, installs any Python package with scripts (i.e. app) from PyPI using
-`pip <https://pypi.org/project/pip/>`_, and atomically creates symlinks for installed scripts in `/usr/local/bin` so
-you can easily use them. Each app version is installed cleanly into its own virtual environment. Optionally, it can
-setup crontab entries to update apps automatically.
+`autopip` automates the creation of a virtual environment using `venv <https://docs.python.org/3/library/venv.html>`_,
+installs any Python package with scripts (i.e. app) from PyPI using `pip <https://pypi.org/project/pip/>`_, and
+atomically creates symlinks for installed scripts in `/usr/local/bin` so you can easily use them. Each app version is
+installed cleanly into its own virtual environment. Optionally, it can set up crontab entries to update apps
+automatically (requires admin permission).
 
 Before starting, check your Python installation -- while `autopip` can install Python apps that run on any Python
 version, it requires Python 3.6+ to run::
@@ -59,11 +59,11 @@ To save typing a few letters, you can also use the ``app`` alias -- short for **
     Updating script symlinks in /usr/local/bin
     + ah
 
-To install an app for older or specific Python version, use the ``--python`` option:
+To install an app for a specific Python version, use the ``--python`` option:
 
 .. code-block:: console
 
-    $ app install ducktape --python 2.7
+    $ app install ducktape --python 3.7
     Installing ducktape to /usr/local/opt/apps/ducktape/0.7.3
     Updating script symlinks in /usr/local/bin
     + ducktape

@@ -287,7 +287,7 @@ class AppsManager:
                     info_lens[i] = len(value) if len(value) > info_lens[i] else info_lens[i]
 
             # Print table
-            table_style = '  '.join('{{:{}}}'.format(l) if l else '{}' for l in info_lens.values())
+            table_style = '  '.join('{{:{}}}'.format(lens) if lens else '{}' for lens in info_lens.values())
             for info_part in app_info:
                 info(table_style.format(*info_part))
 
@@ -455,10 +455,7 @@ class App:
                       'Please install it first, or ensure its path is in PATH.')
                 sys.exit(1)
 
-            if python_version.startswith('2'):
-                venv = f'virtualenv --python=python{python_version}'
-            else:
-                venv = f'python{python_version} -m venv'
+            venv = f'python{python_version} -m venv'
 
             old_venv_dir = None
             old_path = None
@@ -487,16 +484,6 @@ class App:
                 if isinstance(e, CalledProcessError):
                     if e.output:
                         output = e.output.decode('utf-8')
-
-                        if not python_version.startswith('2'):
-                            python2 = shutil.which('python2') or shutil.which('python2.7')
-                            if python2:
-                                py2_version = Path(python2).name.lstrip('python')
-                                if 'is a builtin module since Python 3' in output:
-                                    info(f'Failed to install using Python {python_version} venv, '
-                                         f'let\'s try using Python {py2_version} virtualenv.')
-                                    return self.install(version, app_spec, update=update, python_version=py2_version)
-
                         info(re.sub(r'(https?://)[^/]+:[^/]+@', r'\1<xxx>:<xxx>@', output))
 
                     error(f'! Failed to install using Python {python_version}.'
@@ -564,7 +551,7 @@ class App:
 
                     # Migrate old crontabs
                     try:
-                        old_crons = [c for c in crontab.list().split('\n') if c and 'autopip update' not in c]
+                        old_crons = [c for c in crontab.list_entries().split('\n') if c and 'autopip update' not in c]
                         if old_crons:
                             cron_re = re.compile('autopip install "(.+)"')
                             for cron in old_crons:
@@ -623,7 +610,7 @@ class App:
             script_symlink = self.paths.symlink_root / script
             if script_symlink.exists():
                 script_symlink.unlink()
-                info('- '.format(script_symlink.name))
+                info('- Removed {}'.format(script_symlink.name))
 
         if not printed_updating and sys.stdout.isatty() and current_scripts and 'update' not in sys.argv:
             info('Scripts are in {}: {}'.format(self.paths.symlink_root, ', '.join(sorted(current_scripts))))

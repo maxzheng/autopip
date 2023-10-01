@@ -20,9 +20,10 @@ def _ensure_cron():
 
     except Exception:
         if platform.system() == 'Darwin':
-            return  # macOS does not start cron until there is a crontab entry: https://apple.stackexchange.com/a/266836
+            # macOS does not start cron until there is a crontab entry: https://apple.stackexchange.com/a/266836
+            return
 
-        raise MissingError(f'cron service does not seem to be running. Try starting it: sudo service cron start')
+        raise MissingError('cron service does not seem to be running. Try starting it: sudo service cron start')
 
 
 def add(cmd, schedule='? * * * *', cmd_id=None):
@@ -35,6 +36,7 @@ def add(cmd, schedule='? * * * *', cmd_id=None):
     :param str cmd_id: Short version of cmd that we can use to uniquely identify the command for updating purpose.
                        Defaults to cmd without any redirect chars. It must a regex that matches cmd.
     """
+    print('Adding to crontab (may require admin permission)')
     _ensure_cron()
 
     cmd = cmd.replace('"', r'\"')
@@ -55,7 +57,7 @@ def add(cmd, schedule='? * * * *', cmd_id=None):
     run(crontab_cmd, stderr=STDOUT, shell=True)
 
 
-def list(name_filter='autopip'):
+def list_entries(name_filter='autopip'):
     """ List current schedules """
     _ensure_cron()
 
@@ -64,6 +66,10 @@ def list(name_filter='autopip'):
 
 def remove(name):
     """ Remove cmd with the given name """
+    if name not in list_entries(name):
+        return
+
+    print('Removing from crontab (may require admin permission)')
     _ensure_cron()
 
     name = name.replace('"', r'\"')

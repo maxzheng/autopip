@@ -8,7 +8,7 @@ import shutil
 import subprocess
 import sys
 
-SUPPORTED_VERSIONS = ('3.6', '3.7')
+MIN_SUPPORTED_VERSION = 3.6
 IS_DEBIAN = platform.system() == 'Linux' and os.path.exists('/etc/debian_version')
 IS_OLD_UBUNTU = (IS_DEBIAN and os.path.exists('/etc/lsb-release')
                  and re.search('RELEASE=1[46]', open('/etc/lsb-release').read()))
@@ -17,8 +17,7 @@ SUDO = 'sudo ' if os.getuid() else ''
 
 parser = argparse.ArgumentParser(description='Check and fix Python installation')
 parser.add_argument('--autofix', action='store_true', help='Automatically fix any problems found')
-parser.add_argument('--version', default=SUPPORTED_VERSIONS[0], choices=SUPPORTED_VERSIONS,
-                    help='Python version to check')
+parser.add_argument('--version', default='3', help='Python version to check. autopip requires Python 3.6+. E.g. 3.11')
 args = parser.parse_args()
 
 PY_VERSION = args.version
@@ -47,11 +46,13 @@ def check_curl():
 
 def check_python():
     py3_path = run('which python' + PY_VERSION, return_output=True)
-    if not py3_path:
+    version = '.'.join(run('python3 --version', return_output=True).split()[1].split('.')[:2]) if py3_path else None
+
+    if not py3_path or _version_tuple(version) < _version_tuple(MIN_SUPPORTED_VERSION):
         error('! Python ' + PY_VERSION + ' is not installed.')
         if '--version' not in sys.argv:
-            print('  autopip supports Python {}.'.format(', '.join(SUPPORTED_VERSIONS))
-                  + ' To check a different version, re-run using "python - --version x.y"')
+            print(f'  autopip supports Python {MIN_SUPPORTED_VERSION}+ only.'
+                  '  To check a different version, re-run using "python - --version x.y"')
 
         if IS_OLD_UBUNTU:
             raise AutoFixSuggestion('To install, run',
@@ -94,14 +95,14 @@ def check_pip():
         print('  ' + version_full.strip())
         error('! pip3 is pointing to another Python version and not Python ' + PY_VERSION)
         if '--version' not in sys.argv:
-            print('  autopip supports Python {}.'.format(', '.join(SUPPORTED_VERSIONS))
+            print(f'  autopip supports Python {MIN_SUPPORTED_VERSION}+ only.'
                   + ' To check a different version, re-run using "python - --version x.y"')
 
         raise AutoFixSuggestion('To re-install for Python ' + PY_VERSION + ', run',
                                 'curl -s https://bootstrap.pypa.io/get-pip.py | ' + SUDO + 'python' + PY_VERSION)
 
     version_str = version_full.split()[1]
-    version = tuple(map(_int_or, version_str.split('.', 2)))
+    version = _version_tuple(version_str)
     if version < (9, 0, 3):
         error('! Version is', version_str + ', but should be 9.0.3+')
         raise AutoFixSuggestion('To upgrade, run', SUDO + 'pip3 install pip==9.0.3')
@@ -125,36 +126,17 @@ def check_venv():
     finally:
         shutil.rmtree(test_venv_path, ignore_errors=True)
 
-    try:
-        try:
-            run('virtualenv --python python' + PY_VERSION + ' ' + test_venv_path, stderr=subprocess.STDOUT,
-                return_output=True,
-                raises=True)
-
-        except Exception as e:
-            if run('which virtualenv', return_output=True):
-                error('! Could not create virtual environment.')
-                print('  ' + str(e))
-                sys.exit(1)
-
-            else:
-                error('! virtualenv is not installed.')
-                raise AutoFixSuggestion('To install, run', SUDO + 'pip3 install virtualenv')
-
-    finally:
-        shutil.rmtree(test_venv_path, ignore_errors=True)
-
 
 def check_setuptools():
     try:
-        version_str = run('python' + PY_VERSION + ' -m easy_install --version', return_output=True, raises=True)
+        version_str = run('python' + PY_VERSION + ' -c "import setuptools; print(setuptools.__version__)"',
+                          return_output=True, raises=True)
 
     except Exception:
         error('! setuptools is not installed.')
         raise AutoFixSuggestion('To install, run', SUDO + 'pip3 install setuptools')
 
-    version_str = version_str.split()[1]
-    version = tuple(map(_int_or, version_str.split('.')))
+    version = _version_tuple(version_str)
     if version < (39,):
         error('! Version is', version_str + ', but should be 39+')
         raise AutoFixSuggestion('To upgrade, run', SUDO + 'pip3 install -U setuptools')
@@ -169,7 +151,7 @@ def check_wheel():
         raise AutoFixSuggestion('To install, run', SUDO + 'pip3 install wheel')
 
     version_str = version_str.split()[1]
-    version = tuple(map(_int_or, version_str.split('.')))
+    version = _version_tuple(version_str)
     if version < (0, 31):
         error('! Version is', version_str + ', but should be 0.31+')
         raise AutoFixSuggestion('To upgrade, run', SUDO + 'pip3 install -U wheel')
@@ -224,6 +206,10 @@ def _int_or(value):
         return int(value)
     except Exception:
         return value
+
+
+def _version_tuple(version):
+    return tuple(map(_int_or, str(version).split('.')))
 
 
 def error(*msg):
@@ -297,4 +283,4 @@ except Exception as e:
 except KeyboardInterrupt:
     sys.exit(1)
 
-echo('Python is alive and well. Good job!', color='green')
+echo('Python is alive and well. You are ready to use autopip!', color='green')

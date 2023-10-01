@@ -47,7 +47,7 @@ def test_add(mock_run, monkeypatch):
 
 
 def test_list(mock_run):
-    crontab.list()
+    crontab.list_entries()
     mock_run.call_args_list == [
         call('which crontab'),
         call('pgrep cron'),
