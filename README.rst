@@ -9,10 +9,10 @@ atomically creates symlinks for installed scripts in `/usr/local/bin` so you can
 installed cleanly into its own virtual environment. Optionally, it can set up crontab entries to update apps
 automatically (requires admin permission).
 
-Before starting, check your Python installation -- while `autopip` can install Python apps that run on any Python
-version, it requires Python 3.6+ to run::
+Before starting, make sure your Python installation meets all the requirements -- while `autopip` can install Python
+apps that run on any Python version, it requires Python 3.6+ to run::
 
-    curl -s https://raw.githubusercontent.com/maxzheng/autopip/master/etc/check-python.py | python
+    curl -s https://raw.githubusercontent.com/maxzheng/autopip/master/etc/check-python.py | python3
 
 To install `autopip` to `/usr/local/bin`::
 
@@ -23,7 +23,7 @@ No need to worry about tainting system Python install as `autopip` has no instal
 Alternatively, you can install it in a virtual environment -- the last one that you will ever create manually for
 installing Python apps::
 
-    python3.6 -m venv ~/.virtualenvs/autopip
+    python3 -m venv ~/.virtualenvs/autopip
     source ~/.virtualenvs/autopip/bin/activate
     pip3 install autopip
 
