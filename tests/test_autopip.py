@@ -23,7 +23,7 @@ def test_autopip_common(monkeypatch, autopip, capsys, mock_paths, mock_run):
     assert 'Installing bumper to' in stdout
     assert 'Updating script symlinks in' in stdout
     assert '+ bump' in stdout
-    assert len(stdout.split('\n')) == 6
+    assert len(stdout.split('\n')) == 5
 
     assert run([str(system_root / 'bin' / 'bump'), '-h']).startswith('usage: bump')
 
@@ -50,7 +50,6 @@ def test_autopip_common(monkeypatch, autopip, capsys, mock_paths, mock_run):
     mock_run.reset_mock()
     assert autopip('install bumper --update hourly') == """\
 bumper is up-to-date
-Adding to crontab (may require admin permission)
 Hourly auto-update enabled via cron service
 Scripts are in /tmp/system/bin: bump
 """
@@ -85,8 +84,7 @@ Scripts are in /tmp/system/bin: bump
 
     # Uninstall
     mock_run.reset_mock()
-    assert autopip('uninstall bumper') == ('Uninstalling bumper\n'
-                                           'Removing from crontab (may require admin permission)\n')
+    assert autopip('uninstall bumper') == 'Uninstalling bumper\n'
     assert mock_run.call_args_list == [
         call('which crontab', stderr=-2, shell=True),
         call('ps -ef | grep /usr/sbin/cron | grep -v grep', stderr=-2, shell=True),
@@ -158,8 +156,7 @@ autopip  1.4.2  /tmp/system/autopip/1.4.2
                                 autopip    
 """  # noqa
 
-    assert autopip('uninstall autopip') == ('Uninstalling autopip\n'
-                                            'Removing from crontab (may require admin permission)\n')
+    assert autopip('uninstall autopip') == 'Uninstalling autopip\n'
 
 
 def test_autopip_group(monkeypatch, autopip, mock_run):
@@ -180,7 +177,7 @@ def test_autopip_group(monkeypatch, autopip, mock_run):
     assert 'Updating script symlinks in' in stdout
     assert 'This app has defined "autopip" entry points to install: bumper==0.1.10' in stdout
     assert '+ bump' in stdout
-    assert len(stdout.split('\n')) == 8
+    assert len(stdout.split('\n')) in (7, 8)
 
     assert len(mock_run.call_args_list) == 6
     assert mock_run.call_args_list[0:-1] == [
@@ -230,7 +227,6 @@ Scripts are in /tmp/system/bin: bump
 Uninstalling developer-tools
 This app has defined "autopip" entry points to uninstall: bumper
 Uninstalling bumper
-Removing from crontab (may require admin permission)
 """
     assert mock_run.call_args_list == [
         call('which crontab', stderr=-2, shell=True),

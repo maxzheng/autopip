@@ -37,6 +37,7 @@ def mock_paths(monkeypatch, tmpdir):
 def mock_run(monkeypatch):
     r = MagicMock(return_value='0 * * * * * /bin/autopip update')
     monkeypatch.setattr('autopip.crontab.run', r)
+    monkeypatch.setattr('autopip.crontab.IS_MACOS', False)   # Consistent test behavior on Ubuntu and macOS
     return r
 
 
