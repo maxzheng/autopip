@@ -1,9 +1,10 @@
+from logging import info
 import platform
 from random import randint
 import re
 from subprocess import STDOUT
 
-from autopip.constants import IS_MACOS
+from autopip.constants import IS_MACOS, PYTHON_PATH
 from autopip.exceptions import MissingError
 from autopip.utils import run
 
@@ -38,7 +39,7 @@ def add(cmd, schedule='? * * * *', cmd_id=None):
                        Defaults to cmd without any redirect chars. It must a regex that matches cmd.
     """
     if IS_MACOS:
-        print('Adding to crontab (may require admin permission)')
+        info('Adding to crontab (may require admin permission)')
     _ensure_cron()
 
     cmd = cmd.replace('"', r'\"')
@@ -54,7 +55,7 @@ def add(cmd, schedule='? * * * *', cmd_id=None):
     if '?' in schedule:
         schedule = schedule.replace('?', str(randint(0, 59)))
 
-    crontab_cmd = (rf'( crontab -l | grep -vi "{cmd_id}"; echo "{schedule} PATH=/usr/local/bin:\$PATH {cmd}" )'
+    crontab_cmd = (rf'( crontab -l | grep -vi "{cmd_id}"; echo "{schedule} PATH={PYTHON_PATH}:\$PATH {cmd}" )'
                    ' | crontab -')
     run(crontab_cmd, stderr=STDOUT, shell=True)
 
@@ -74,7 +75,7 @@ def remove(name):
         return
 
     if IS_MACOS:
-        print('Removing from crontab (may require admin permission)')
+        info('Removing from crontab (may require admin permission)')
     _ensure_cron()
 
     name = name.replace('"', r'\"')

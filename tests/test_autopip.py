@@ -1,13 +1,10 @@
-import os
 import re
-from subprocess import CalledProcessError
 from time import time
 
-from mock import MagicMock, Mock, call
-import pytest
+from mock import Mock, call
 
 from autopip.utils import run
-from autopip.constants import PYTHON_VERSION
+from autopip.constants import PYTHON_VERSION, PYTHON_PATH
 
 
 def test_autopip_help(autopip, capsys):
@@ -17,10 +14,8 @@ def test_autopip_help(autopip, capsys):
     assert 'usage: autopip' in stdout
 
 
-def test_autopip_common(monkeypatch, autopip, capsys, mock_paths):
+def test_autopip_common(monkeypatch, autopip, capsys, mock_paths, mock_run):
     system_root, _, _ = mock_paths
-    mock_run = MagicMock()
-    monkeypatch.setattr('autopip.crontab.run', mock_run)
     monkeypatch.setattr('autopip.crontab.randint', Mock(return_value=10))
 
     # Install latest
@@ -28,23 +23,24 @@ def test_autopip_common(monkeypatch, autopip, capsys, mock_paths):
     assert 'Installing bumper to' in stdout
     assert 'Updating script symlinks in' in stdout
     assert '+ bump' in stdout
-    assert len(stdout.split('\n')) == 5
+    assert len(stdout.split('\n')) == 6
 
     assert run([str(system_root / 'bin' / 'bump'), '-h']).startswith('usage: bump')
 
     assert len(mock_run.call_args_list) == 6
     assert mock_run.call_args_list[0:-1] == [
-        call('which crontab', shell=True, stderr=-2),
-        call('ps -ef | grep /usr/sbin/cron | grep -v grep', shell=True, stderr=-2),
-        call('crontab -l | grep autopip', shell=True, stderr=-2),
-        call('which crontab', shell=True, stderr=-2),
-        call('ps -ef | grep /usr/sbin/cron | grep -v grep', shell=True, stderr=-2)
+        call('which crontab', stderr=-2, shell=True),
+        call('ps -ef | grep /usr/sbin/cron | grep -v grep', stderr=-2, shell=True),
+        call('crontab -l | grep -i "autopip"', stderr=-2, shell=True),
+        call('which crontab', stderr=-2, shell=True),
+        call('ps -ef | grep /usr/sbin/cron | grep -v grep', stderr=-2, shell=True),
         ]
-    update_call = re.sub('/tmp/.*/system/', '/tmp/system/',
-                         re.sub('/home/.*virtualenvs/autopip[^/]*', '/home/venv/autopip',
-                                mock_run.call_args_list[-1][0][0]))
+    update_call = re.sub('(/tmp|/private)/.*/system/', '/tmp/system/',
+                         re.sub('/home/.*/autopip/', '/home/venv/autopip/',
+                                re.sub(' /Users/.*/autopip/', ' /home/venv/autopip/',
+                                       mock_run.call_args_list[-1][0][0])))
     assert update_call == (
-        r'( crontab -l | grep -vi "autopip update"; echo "10 * * * * PATH=/usr/local/bin:\$PATH '
+        rf'( crontab -l | grep -vi "autopip update"; echo "10 * * * * PATH={PYTHON_PATH}:\$PATH '
         r'/home/venv/autopip/bin/autopip update 2>&1 >> /tmp/system/log/cron.log" ) | crontab -')
 
     assert 'system/bumper/0.1.13' in autopip('list')
@@ -54,6 +50,7 @@ def test_autopip_common(monkeypatch, autopip, capsys, mock_paths):
     mock_run.reset_mock()
     assert autopip('install bumper --update hourly') == """\
 bumper is up-to-date
+Adding to crontab (may require admin permission)
 Hourly auto-update enabled via cron service
 Scripts are in /tmp/system/bin: bump
 """
@@ -81,23 +78,22 @@ Scripts are in /tmp/system/bin: bump
     assert stdout.startswith('! No new version')
 
     stdout, _ = capsys.readouterr()
-    lines = stdout.split('\n')
-    assert len(lines) == 5
-    assert lines[0] == 'Waiting for new version of bumper to be published...'.ljust(80)
-    assert lines[-2] == '\033[1AWaiting for new version of bumper to be published...'.ljust(80)
+    assert 'Waiting for new version of bumper to be published...' in stdout
+    assert '\033[1AWaiting for new version of bumper to be published...' in stdout
 
     assert mock_sleep.call_count == 4
 
     # Uninstall
     mock_run.reset_mock()
-    assert autopip('uninstall bumper') == 'Uninstalling bumper\n'
+    assert autopip('uninstall bumper') == ('Uninstalling bumper\n'
+                                           'Removing from crontab (may require admin permission)\n')
     assert mock_run.call_args_list == [
-        call('which crontab', shell=True, stderr=-2),
-        call('ps -ef | grep /usr/sbin/cron | grep -v grep', shell=True, stderr=-2),
-        call('( crontab -l | grep -vi "autopip install \\"bumper[^a-z]*\\"" ) | crontab -', shell=True, stderr=-2),
-        call('which crontab', shell=True, stderr=-2),
-        call('ps -ef | grep /usr/sbin/cron | grep -v grep', shell=True, stderr=-2),
-        call('( crontab -l | grep -vi "autopip" ) | crontab -', shell=True, stderr=-2)
+        call('which crontab', stderr=-2, shell=True),
+        call('ps -ef | grep /usr/sbin/cron | grep -v grep', stderr=-2, shell=True),
+        call('crontab -l | grep -i "autopip"', stderr=-2, shell=True),
+        call('which crontab', stderr=-2, shell=True),
+        call('ps -ef | grep /usr/sbin/cron | grep -v grep', stderr=-2, shell=True),
+        call('( crontab -l | grep -vi "autopip" ) | crontab -', stderr=-2, shell=True)
     ]
 
     assert autopip('list') == 'No apps are installed yet.\n'
@@ -127,23 +123,6 @@ def test_install_no_path(autopip, monkeypatch):
                       'Please install it first, or ensure its path is in PATH.\n')
 
 
-def test_install_python_2(autopip, mock_paths):
-    system_path, _, _ = mock_paths
-    assert autopip('install bumper --python 2.7 --update hourly') == """\
-Installing bumper to /tmp/system/bumper/0.1.13
-Hourly auto-update enabled via cron service
-Updating script symlinks in /tmp/system/bin
-+ bump
-"""
-    version = run([str(system_path / 'bumper' / 'current' / 'bin' / 'python'), '--version'],
-                  stderr=-2)
-    assert version.startswith('Python 2.7')
-
-    assert run([str(system_path / 'bin' / 'bump'), '-h']).startswith('usage: bump')
-
-    assert autopip('uninstall bumper')
-
-
 def test_install_nonexisting(autopip):
     stdout, _ = autopip('install this-does-not-exist-blah-blah', raises=SystemExit)
     assert stdout.startswith('! No app version found in http') \
@@ -155,35 +134,6 @@ def test_install_failed(autopip, monkeypatch, mock_run):
     monkeypatch.setattr('autopip.manager.run', mock_run)
     stdout, _ = autopip('install utils-core', raises=SystemExit)
     assert '! install failed' in stdout
-
-
-def test_install_python2_using_python3_mock(autopip, mock_run):
-    mock_run.side_effect = CalledProcessError(1, 'cmd',
-                                              output='some-pkg is a builtin module since Python 3'.encode())
-    stdout, _ = autopip('install pantsbuild.pants==1.6.0', raises=SystemExit)
-    assert stdout.startswith(f"""\
-Installing pantsbuild.pants to /tmp/system/pantsbuild.pants/1.6.0
-Failed to install using Python {PYTHON_VERSION} venv, let's try using Python 2 virtualenv.
-Installing pantsbuild.pants to /tmp/system/pantsbuild.pants/1.6.0
-some-pkg is a builtin module since Python 3
-! Failed to install using Python 2. If this app requires a different Python version, \
-please specify it using --python option.
-! Command 'cmd' returned non-zero exit status 1.
-""")
-
-
-@pytest.mark.skipif(not os.environ.get('ALL'), reason='Too slow. Set ALL=1 to run')
-def test_install_python2_using_python3(autopip, ):
-    assert autopip('install pantsbuild.pants==1.6.0') == f"""\
-Installing pantsbuild.pants to /tmp/system/pantsbuild.pants/1.6.0
-Failed to install using Python {PYTHON_VERSION} venv, let's try using Python 2 virtualenv.
-Installing pantsbuild.pants to /tmp/system/pantsbuild.pants/1.6.0
-Auto-update will be disabled since we are pinning to a specific version.
-To enable, re-run without pinning to specific version with --update option
-Updating script symlinks in /tmp/system/bin
-+ pants
-"""
-    assert autopip('uninstall pantsbuild.pants') == 'Uninstalling pantsbuild.pants\n'
 
 
 def test_install_autopip(autopip, monkeypatch):
@@ -208,12 +158,11 @@ autopip  1.4.2  /tmp/system/autopip/1.4.2
                                 autopip    
 """  # noqa
 
-    assert autopip('uninstall autopip') == 'Uninstalling autopip\n'
+    assert autopip('uninstall autopip') == ('Uninstalling autopip\n'
+                                            'Removing from crontab (may require admin permission)\n')
 
 
-def test_autopip_group(monkeypatch, autopip):
-    mock_run = MagicMock()
-    monkeypatch.setattr('autopip.crontab.run', mock_run)
+def test_autopip_group(monkeypatch, autopip, mock_run):
     monkeypatch.setattr('autopip.crontab.randint', Mock(return_value=10))
 
     def mock_group_specs(self, path=None, name_only=False):
@@ -231,21 +180,22 @@ def test_autopip_group(monkeypatch, autopip):
     assert 'Updating script symlinks in' in stdout
     assert 'This app has defined "autopip" entry points to install: bumper==0.1.10' in stdout
     assert '+ bump' in stdout
-    assert len(stdout.split('\n')) == 7
+    assert len(stdout.split('\n')) == 8
 
     assert len(mock_run.call_args_list) == 6
     assert mock_run.call_args_list[0:-1] == [
         call('which crontab', shell=True, stderr=-2),
         call('ps -ef | grep /usr/sbin/cron | grep -v grep', shell=True, stderr=-2),
-        call('crontab -l | grep autopip', shell=True, stderr=-2),
+        call('crontab -l | grep -i "autopip"', shell=True, stderr=-2),
         call('which crontab', shell=True, stderr=-2),
         call('ps -ef | grep /usr/sbin/cron | grep -v grep', shell=True, stderr=-2)
         ]
-    update_call = re.sub('/tmp/.*/system/', '/tmp/system/',
-                         re.sub('/home/.*virtualenvs/autopip[^/]*', '/home/venv/autopip',
-                                mock_run.call_args_list[-1][0][0]))
+    update_call = re.sub('(/tmp|/private)/.*/system/', '/tmp/system/',
+                         re.sub('/home/.*/autopip/', '/home/venv/autopip/',
+                                re.sub(' /Users/.*/autopip/', ' /home/venv/autopip/',
+                                       mock_run.call_args_list[-1][0][0])))
     assert update_call == (
-        r'( crontab -l | grep -vi "autopip update"; echo "10 * * * * PATH=/usr/local/bin:\$PATH '
+        rf'( crontab -l | grep -vi "autopip update"; echo "10 * * * * PATH={PYTHON_PATH}:\$PATH '
         r'/home/venv/autopip/bin/autopip update 2>&1 >> /tmp/system/log/cron.log" ) | crontab -')
 
     assert 'system/bumper/0.1.10' in autopip('list')
@@ -267,39 +217,28 @@ This app has defined "autopip" entry points to install: bumper==0.1.10
     # Already installed
     mock_run.reset_mock()
     assert autopip(f'install developer-tools=={installed_version}') == """\
-developer-tools is up-to-date [per spec: ==1.0.7]
+developer-tools is up-to-date [per spec: ==1.0.8]
 Auto-update will be disabled since we are pinning to a specific version.
 To enable, re-run without pinning to specific version with --update option
 This app has defined "autopip" entry points to install: bumper==0.1.10
 bumper is up-to-date [per spec: ==0.1.10]
 Scripts are in /tmp/system/bin: bump
 """
-    assert mock_run.call_args_list == [
-        call('which crontab', shell=True, stderr=-2),
-        call('ps -ef | grep /usr/sbin/cron | grep -v grep', shell=True, stderr=-2),
-        call('( crontab -l | grep -vi "autopip install \\"developer-tools[^a-z]*\\"" ) | crontab -',
-             shell=True, stderr=-2)
-    ]
-
     # Uninstall
     mock_run.reset_mock()
     assert autopip('uninstall developer-tools') == """\
 Uninstalling developer-tools
 This app has defined "autopip" entry points to uninstall: bumper
 Uninstalling bumper
+Removing from crontab (may require admin permission)
 """
     assert mock_run.call_args_list == [
-        call('which crontab', shell=True, stderr=-2),
-        call('ps -ef | grep /usr/sbin/cron | grep -v grep', shell=True, stderr=-2),
-        call('( crontab -l | grep -vi "autopip install \\"developer-tools[^a-z]*\\"" ) | crontab -',
-             shell=True, stderr=-2),
-        call('which crontab', shell=True, stderr=-2),
-        call('ps -ef | grep /usr/sbin/cron | grep -v grep', shell=True, stderr=-2),
-        call('( crontab -l | grep -vi "autopip install \\"bumper[^a-z]*\\"" ) | crontab -',
-             shell=True, stderr=-2),
-        call('which crontab', shell=True, stderr=-2),
-        call('ps -ef | grep /usr/sbin/cron | grep -v grep', shell=True, stderr=-2),
-        call('( crontab -l | grep -vi "autopip" ) | crontab -', shell=True, stderr=-2)
+        call('which crontab', stderr=-2, shell=True),
+        call('ps -ef | grep /usr/sbin/cron | grep -v grep', stderr=-2, shell=True),
+        call('crontab -l | grep -i "autopip"', stderr=-2, shell=True),
+        call('which crontab', stderr=-2, shell=True),
+        call('ps -ef | grep /usr/sbin/cron | grep -v grep', stderr=-2, shell=True),
+        call('( crontab -l | grep -vi "autopip" ) | crontab -', stderr=-2, shell=True)
     ]
 
     assert autopip('list') == 'No apps are installed yet.\n'

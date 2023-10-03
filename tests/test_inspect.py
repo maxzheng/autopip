@@ -9,5 +9,4 @@ def test_gather_intel():
 
 def test_scripts(monkeypatch):
     dist = pkg_resources.get_distribution('autopip')
-    dist.get_entry_map = lambda *arg: {}
-    assert get_scripts(dist) == []
+    assert get_scripts(dist) == ['app', 'autopip']

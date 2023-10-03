@@ -1,9 +1,11 @@
 from enum import IntEnum
+from pathlib import Path
 import sys
 import platform
 
 
 PYTHON_VERSION = '{}.{}'.format(*sys.version_info[0:2])
+PYTHON_PATH = str(Path(sys.executable).parent)
 IS_MACOS = platform.system() == 'Darwin'
 WAIT_TIMEOUT_MSG = 'No new version was published after an hour, so not gonna wait anymore.'
 INSTALL_TIMEOUT_MSG = """Uh oh, something is wrong...

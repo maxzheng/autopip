@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 import re
 
-from mock import Mock
+from mock import Mock, MagicMock
 import pytest
 
 from autopip import main
@@ -33,17 +33,16 @@ def mock_paths(monkeypatch, tmpdir):
     return system_root, local_root, user_root
 
 
-@pytest.fixture()
+@pytest.fixture(autouse=True)
 def mock_run(monkeypatch):
-    r = Mock(return_value='0 * * * * * /bin/hello')
+    r = MagicMock(return_value='0 * * * * * /bin/autopip update')
     monkeypatch.setattr('autopip.crontab.run', r)
-    monkeypatch.setattr('autopip.manager.run', r)
     return r
 
 
 @pytest.fixture()
 def autopip(monkeypatch, caplog):
-    tmp_re = re.compile('/tmp/.*/system/')
+    tmp_re = re.compile('(/tmp|/private)/.*/system/')
 
     def _run(args, isatty=True, raises=None):
         if isinstance(args, str):
