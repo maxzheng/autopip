@@ -42,7 +42,7 @@ Now, you can easily install any apps from PyPI:
     Updating symlinks in /usr/local/bin
     + wst
 
-Optionally use the `--update` option to update it daily via cron (may require admin permission on macOS):
+Optionally use the ``--update`` option to update it daily via cron (may require admin permission on macOS):
 
 .. code-block:: console
 
