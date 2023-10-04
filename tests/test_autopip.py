@@ -36,8 +36,8 @@ def test_autopip_common(monkeypatch, autopip, capsys, mock_paths, mock_run):
         call('ps -ef | grep /usr/sbin/cron | grep -v grep', stderr=-2, shell=True),
         ]
     update_call = re.sub('(/tmp|/private)/.*/system/', '/tmp/system/',
-                         re.sub('/home/.*/autopip/', '/home/venv/autopip/',
-                                re.sub(' /Users/.*/autopip/', ' /home/venv/autopip/',
+                         re.sub(' /home/.*/autopip/', ' /home/venv/autopip/',
+                                re.sub(' /Users/.*/autopip/(.tox/py3/)?', ' /home/venv/autopip/',
                                        mock_run.call_args_list[-1][0][0])))
     assert update_call == (
         rf'( crontab -l | grep -vi "autopip update"; echo "10 * * * * PATH={PYTHON_PATH}:\$PATH '
@@ -188,8 +188,8 @@ def test_autopip_group(monkeypatch, autopip, mock_run):
         call('ps -ef | grep /usr/sbin/cron | grep -v grep', shell=True, stderr=-2)
         ]
     update_call = re.sub('(/tmp|/private)/.*/system/', '/tmp/system/',
-                         re.sub('/home/.*/autopip/', '/home/venv/autopip/',
-                                re.sub(' /Users/.*/autopip/', ' /home/venv/autopip/',
+                         re.sub(' /home/.*/autopip/', ' /home/venv/autopip/',
+                                re.sub(' /Users/.*/autopip/(.tox/py3/)?', ' /home/venv/autopip/',
                                        mock_run.call_args_list[-1][0][0])))
     assert update_call == (
         rf'( crontab -l | grep -vi "autopip update"; echo "10 * * * * PATH={PYTHON_PATH}:\$PATH '
