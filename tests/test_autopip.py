@@ -40,7 +40,7 @@ def test_autopip_common(monkeypatch, autopip, capsys, mock_paths, mock_run):
                                 re.sub(' /Users/.*/autopip/(.tox/py3/)?', ' /home/venv/autopip/',
                                        mock_run.call_args_list[-1][0][0])))
     assert update_call == (
-        rf'( crontab -l | grep -vi "autopip update"; echo "10 * * * * PATH={PYTHON_PATH}:\$PATH '
+        rf'( crontab -l | grep -vi "autopip update"; echo "10 * * * * PATH={PYTHON_PATH} '
         r'/home/venv/autopip/bin/autopip update 2>&1 >> /tmp/system/log/cron.log" ) | crontab -')
 
     assert 'system/bumper/0.1.13' in autopip('list')
@@ -192,7 +192,7 @@ def test_autopip_group(monkeypatch, autopip, mock_run):
                                 re.sub(' /Users/.*/autopip/(.tox/py3/)?', ' /home/venv/autopip/',
                                        mock_run.call_args_list[-1][0][0])))
     assert update_call == (
-        rf'( crontab -l | grep -vi "autopip update"; echo "10 * * * * PATH={PYTHON_PATH}:\$PATH '
+        rf'( crontab -l | grep -vi "autopip update"; echo "10 * * * * PATH={PYTHON_PATH} '
         r'/home/venv/autopip/bin/autopip update 2>&1 >> /tmp/system/log/cron.log" ) | crontab -')
 
     assert 'system/bumper/0.1.10' in autopip('list')
