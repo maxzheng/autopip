@@ -1,5 +1,13 @@
-Version 1.7.7
+Version 1.7.8
 ================================================================================
+
+* Switch to use importlib as pkg_resources is being deprecated
+* Use correct path to python executable
+* Fix tests again
+* Update pythonpackage.yml
+
+Version 1.7.7
+--------------------------------------------------------------------------------
 
 * Fix readme
 
