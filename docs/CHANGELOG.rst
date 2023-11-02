@@ -1,5 +1,11 @@
-Version 1.7.8
+Version 1.7.9
 ================================================================================
+
+* Remove instruction to install autopip using itself
+  as that can break when Python is upgraded
+
+Version 1.7.8
+--------------------------------------------------------------------------------
 
 * Switch to use importlib as pkg_resources is being deprecated
 * Use correct path to python executable
