@@ -102,22 +102,6 @@ To uninstall::
 
     app uninstall ducktape
 
-And you can even keep `autopip` updated automatically by installing itself:
-
-.. code-block:: console
-
-    $ app install autopip==1.* --update monthly
-    Installing autopip to /usr/local/opt/apps/autopip/1.0.0
-    Monthly auto-update enabled via cron service
-    Updating symlinks in /usr/local/bin
-    * app (updated)
-    * autopip (updated)
-
-    # And uninstall autopip using pip3 to avoid confusion (if it is in a different path than above)
-    $ sudo pip3 uninstall autopip
-
-Now, that's convenience! ;)
-
 If you need to use a private PyPI index, just configure `index-url` in `pip.conf
 <https://pip.pypa.io/en/stable/user_guide/#configuration>`_ as `autopip` uses `pip` to install apps.
 
