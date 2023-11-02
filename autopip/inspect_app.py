@@ -2,17 +2,27 @@
 
 import argparse
 import json
-import pkg_resources
 import re
 
 
 def gather_intel(app):
     """ Get scripts and entry points info from app """
-    dist = pkg_resources.get_distribution(app)
-    intel = {
-        'scripts': get_scripts(dist),
-        'group_specs': get_group_specs(dist),
-    }
+    try:
+        from importlib.metadata import entry_points
+
+        scripts = [e.name for e in entry_points(group='console_scripts') if e.dist.name == app]
+        intel = {
+            'scripts': scripts,
+            'group_specs': []  # Not supported as it isn't used anymore
+        }
+
+    except Exception:
+        import pkg_resources  # Deprecated as API: https://setuptools.pypa.io/en/latest/pkg_resources.html
+        dist = pkg_resources.get_distribution(app)
+        intel = {
+            'scripts': get_scripts(dist),
+            'group_specs': get_group_specs(dist),
+        }
 
     return intel
 
